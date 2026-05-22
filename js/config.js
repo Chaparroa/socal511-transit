@@ -1,0 +1,80 @@
+// Agency and route configuration.
+// Add a new agency here when its GTFS-RT feed is ready — no other files change.
+
+export const AGENCIES = {
+  metro: {
+    id:        'metro',
+    name:      'LA Metro',
+    shortName: 'Metro',
+    color:     '#0072CE',
+    wsBase:    'wss://api.metro.net/ws/LACMTA/vehicle_positions',
+    active:    true,
+  },
+  bbb: {
+    id:        'bbb',
+    name:      'Big Blue Bus',
+    shortName: 'BBB',
+    color:     '#2A5FA5',
+    wsBase:    null,  // vehicle positions feed offline — revisit when BBB fixes feed
+    active:    false,
+  },
+};
+
+// Metro rail lines with official colors and letter codes
+export const METRO_RAIL = [
+  { code: 'A',  label: 'A Line',  desc: 'Long Beach – Downtown LA',       color: '#0075C9' },
+  { code: 'B',  label: 'B Line',  desc: 'North Hollywood – Union Station', color: '#E3131B' },
+  { code: 'C',  label: 'C Line',  desc: 'Redondo Beach – Norwalk',         color: '#09A550' },
+  { code: 'D',  label: 'D Line',  desc: 'Koreatown – Union Station',        color: '#794B9E' },
+  { code: 'E',  label: 'E Line',  desc: 'Santa Monica – Downtown LA',      color: '#939597' },
+  { code: 'G',  label: 'G Line',  desc: 'Chatsworth – North Hollywood',    color: '#F68B1F' },
+  { code: 'J',  label: 'J Line',  desc: 'El Monte – San Pedro',            color: '#A6A8AB' },
+  { code: 'K',  label: 'K Line',  desc: 'Expo/Crenshaw – LAX',             color: '#E96BB0' },
+];
+
+// Featured bus routes for the landing page picker
+export const METRO_BUS_FEATURED = [
+  { code: '2',   desc: 'Sunset Bl' },
+  { code: '4',   desc: 'Santa Monica Bl' },
+  { code: '10',  desc: 'Doheny/Pico' },
+  { code: '14',  desc: 'Beverly Bl' },
+  { code: '16',  desc: 'Venice Bl' },
+  { code: '18',  desc: 'Wilshire Bl' },
+  { code: '20',  desc: 'Wilshire Bl (limited)' },
+  { code: '28',  desc: 'Olympic Bl' },
+  { code: '33',  desc: 'Venice Bl' },
+  { code: '40',  desc: 'Figueroa St' },
+  { code: '45',  desc: 'Hill St / Broadway' },
+  { code: '51',  desc: 'Vernon Ave' },
+  { code: '60',  desc: 'Montebello' },
+  { code: '68',  desc: 'Central Ave' },
+  { code: '70',  desc: 'Figueroa Rapid' },
+  { code: '76',  desc: 'Lankershim Bl' },
+  { code: '81',  desc: 'Main St / La Brea' },
+  { code: '105', desc: 'Imperial Hwy' },
+  { code: '108', desc: 'Slauson Ave' },
+  { code: '111', desc: 'Sepulveda Bl' },
+  { code: '115', desc: 'Aviation Bl' },
+  { code: '200', desc: 'Alvarado St' },
+  { code: '204', desc: 'Vermont Ave' },
+  { code: '207', desc: 'Western Ave' },
+  { code: '210', desc: 'Melrose Ave' },
+  { code: '212', desc: 'Vermont/Harbor Rapid' },
+  { code: '217', desc: 'Fairfax Ave' },
+  { code: '218', desc: 'La Brea Ave' },
+  { code: '222', desc: 'Ventura Bl' },
+  { code: '232', desc: 'Artesia Bl' },
+  { code: '240', desc: 'San Fernando Rd' },
+  { code: '251', desc: 'Colorado Bl' },
+  { code: '260', desc: 'Valley Bl' },
+  { code: '487', desc: 'Westwood/Downtown Express' },
+  { code: '720', desc: 'Wilshire Rapid' },
+  { code: '728', desc: 'Olympic Rapid' },
+  { code: '733', desc: 'Cesar Chavez Rapid' },
+  { code: '740', desc: 'Sunset Rapid' },
+  { code: '745', desc: 'Vermont Rapid' },
+  { code: '754', desc: 'Vermont/Harbor Rapid' },
+  { code: '757', desc: 'Figueroa Rapid' },
+  { code: '760', desc: 'Rosecrans Rapid' },
+  { code: '780', desc: 'Whittier Bl Rapid' },
+];

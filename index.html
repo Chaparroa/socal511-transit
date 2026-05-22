@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoCal 511 Transit Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --metro:   #0072CE;
+      --bg:      #F0F4F8;
+      --surface: #FFFFFF;
+      --border:  #E0E7F0;
+      --text:    #1A2535;
+      --muted:   #6B7A8D;
+      --rail-a:  #0075C9;
+      --rail-b:  #E3131B;
+      --rail-c:  #09A550;
+      --rail-d:  #794B9E;
+      --rail-e:  #939597;
+      --rail-g:  #F68B1F;
+      --rail-j:  #A6A8AB;
+      --rail-k:  #E96BB0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+    }
+
+    /* ── HEADER ── */
+    .site-header {
+      background: var(--metro);
+      padding: 1.25rem 1.5rem 1rem;
+    }
+    .site-header h1 {
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .site-header p {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.82rem;
+      margin-top: 2px;
+    }
+
+    /* ── SEARCH ── */
+    .search-wrap {
+      background: var(--metro);
+      padding: 0 1.5rem 1.25rem;
+    }
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+    .search-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      outline: none;
+    }
+    .search-input::placeholder { color: rgba(255,255,255,0.55); }
+    .search-input:focus { background: rgba(255,255,255,0.28); }
+    .search-btn {
+      padding: 10px 16px;
+      background: #fff;
+      color: var(--metro);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .search-btn:hover { background: #e8f1fd; }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── RAIL GRID ── */
+    .rail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .line-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text);
+      transition: box-shadow 0.15s, transform 0.12s;
+      cursor: pointer;
+    }
+    .line-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .line-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .line-badge.circle { border-radius: 50%; }
+
+    .line-card-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    /* ── BUS GRID ── */
+    .bus-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .bus-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text);
+      transition: box-shadow 0.15s, transform 0.12s;
+      cursor: pointer;
+    }
+    .bus-card:hover {
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      transform: translateY(-1px);
+    }
+
+    .bus-badge {
+      background: var(--metro);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .bus-desc {
+      font-size: 0.62rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.3;
+      max-width: 64px;
+    }
+
+    /* ── RECENTLY VIEWED ── */
+    #recent-section { display: none; margin-bottom: 2rem; }
+    .recent-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .recent-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .recent-chip:hover { border-color: var(--metro); color: var(--metro); }
+    .recent-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── BBB COMING SOON ── */
+    .coming-soon {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .coming-soon-badge {
+      background: #2A5FA5;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .coming-soon-text { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+    .coming-soon-text strong { color: var(--text); }
+
+    @media (max-width: 480px) {
+      .rail-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+      .line-badge { width: 34px; height: 34px; font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <h1>SoCal 511 Transit Tracker</h1>
+  <p>Real-time bus and rail tracking for Los Angeles</p>
+</header>
+
+<div class="search-wrap">
+  <form class="search-row" id="search-form">
+    <input class="search-input" id="search-input" type="text"
+      placeholder="Type a route number (e.g. 720, 207, B)" autocomplete="off" />
+    <button class="search-btn" type="submit">Track →</button>
+  </form>
+</div>
+
+<main>
+
+  <!-- RECENTLY VIEWED -->
+  <section id="recent-section">
+    <p class="section-label">Recently Viewed</p>
+    <div class="recent-list" id="recent-list"></div>
+  </section>
+
+  <!-- RAIL LINES -->
+  <section>
+    <p class="section-label">Metro Rail Lines</p>
+    <div class="rail-grid" id="rail-grid"></div>
+  </section>
+
+  <!-- BUS ROUTES -->
+  <section>
+    <p class="section-label">Metro Bus — Popular Routes</p>
+    <div class="bus-grid" id="bus-grid"></div>
+  </section>
+
+  <!-- BBB COMING SOON -->
+  <section>
+    <p class="section-label">Other Agencies</p>
+    <div class="coming-soon">
+      <div class="coming-soon-badge">BBB</div>
+      <div class="coming-soon-text">
+        <strong>Big Blue Bus (Santa Monica)</strong> — coming soon. Real-time vehicle feed is currently offline. We'll activate it when their GPS data is restored.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script type="module">
+import { METRO_RAIL, METRO_BUS_FEATURED } from '/js/config.js';
+
+// ── RENDER RAIL ──
+const railGrid = document.getElementById('rail-grid');
+METRO_RAIL.forEach(line => {
+  const a = document.createElement('a');
+  a.className = 'line-card';
+  a.href = `/line/metro-${line.code}`;
+  a.innerHTML = `
+    <div class="line-badge" style="background:${line.color}">${line.code}</div>
+    <span class="line-card-label">${line.label}</span>
+  `;
+  railGrid.appendChild(a);
+});
+
+// ── RENDER BUS ──
+const busGrid = document.getElementById('bus-grid');
+METRO_BUS_FEATURED.forEach(route => {
+  const a = document.createElement('a');
+  a.className = 'bus-card';
+  a.href = `/line/metro-${route.code}`;
+  a.innerHTML = `
+    <div class="bus-badge">${route.code}</div>
+    <span class="bus-desc">${route.desc}</span>
+  `;
+  busGrid.appendChild(a);
+});
+
+// ── RECENTLY VIEWED ──
+function loadRecent() {
+  const recent = JSON.parse(localStorage.getItem('recent_lines') || '[]');
+  if (!recent.length) return;
+  document.getElementById('recent-section').style.display = 'block';
+  const list = document.getElementById('recent-list');
+  list.innerHTML = '';
+  recent.slice(0, 8).forEach(item => {
+    const a = document.createElement('a');
+    a.className = 'recent-chip';
+    a.href = `/line/${item.slug}`;
+    a.innerHTML = `
+      <span class="recent-dot" style="background:${item.color}"></span>
+      ${item.label}
+    `;
+    list.appendChild(a);
+  });
+}
+loadRecent();
+
+// ── SEARCH ──
+document.getElementById('search-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const val = document.getElementById('search-input').value.trim().toUpperCase();
+  if (!val) return;
+  window.location.href = `/line/metro-${val}`;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/line/:slug", "destination": "/line.html" }
+  ]
+}
