@@ -275,10 +275,20 @@
     }
 
     /* ── POPUP STYLES ── */
-    .pop { min-width: 160px; }
-    .pop-title { font-size: 0.9rem; font-weight: 700; color: #111; margin-bottom: 6px; display: block; }
+    .pop { min-width: 180px; }
+    .pop-title { font-size: 0.9rem; font-weight: 700; color: #111; margin-bottom: 8px; display: block; }
     .pop-row { font-size: 0.8rem; color: #555; padding: 2px 0; }
     .pop-row span { font-weight: 600; color: #222; }
+    .pop-next-stop {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f0f4f8;
+      border-radius: 8px;
+      border-left: 3px solid var(--route-color, #0072CE);
+    }
+    .pop-next-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 3px; }
+    .pop-next-name  { font-size: 0.85rem; font-weight: 700; color: #111; }
+    .pop-eta        { font-size: 0.78rem; font-weight: 600; color: var(--route-color, #0072CE); margin-top: 2px; }
     .pop-status { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 7px; border-radius: 10px; margin-top: 6px; background: #e8f5e9; color: #2e7d32; }
     .pop-status.stopped { background: #fff3e0; color: #e65100; }
 
@@ -397,6 +407,41 @@
       .replace(/\b\w/g, c => c.toUpperCase());
   }
 
+  // ── STOP LOOKUP MAP (built once stops load) ──
+  const stopMap = new Map(); // stop_id string → { name, lat, lng }
+
+  function buildStopMap() {
+    state.stopsAll.forEach(s => {
+      stopMap.set(String(s.stop_id), {
+        name: s.stop_name,
+        lat:  s.geometry.coordinates[1],
+        lng:  s.geometry.coordinates[0],
+      });
+    });
+  }
+
+  // ── HAVERSINE DISTANCE (meters) ──
+  function distanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2
+            + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  // ── ETA TEXT ──
+  function getETAText(pos, stop, currentStatus) {
+    if (currentStatus === 'STOPPED_AT') return 'At this stop';
+    const speed = pos?.speed || 0; // m/s
+    if (speed < 0.5) return 'Stopped nearby';
+    const dist = distanceMeters(pos.latitude, pos.longitude, stop.lat, stop.lng);
+    const mins  = Math.round(dist / speed / 60);
+    if (mins < 1) return 'Arriving now';
+    return `~${mins} min away`;
+  }
+
   // ── APPLY ROUTE COLOR ──
   function applyRouteColor(color) {
     const hex = color ? `#${color}` : agencyConfig.color;
@@ -491,19 +536,27 @@
     }
 
     const { latitude: lat, longitude: lng, bearing } = pos;
-    const label  = data.vehicle?.vehicle?.label || vehicleId;
-    const status = data.vehicle?.currentStatus || '';
-    const stopId = data.vehicle?.stopId || '';
-    const icon   = makeVehicleIcon(routeCode, routeColor(), bearing);
+    const label      = data.vehicle?.vehicle?.label || vehicleId;
+    const status     = data.vehicle?.currentStatus || '';
+    const stopId     = data.vehicle?.stopId || '';
+    const icon       = makeVehicleIcon(routeCode, routeColor(), bearing);
 
-    const isMoving = !status.includes('STOPPED');
+    const isMoving   = status === 'IN_TRANSIT_TO';
     const statusText = formatStatus(status);
+    const nextStop   = stopMap.get(String(stopId));
+    const stopLabel  = isMoving ? 'Next stop' : 'At stop';
+    const eta        = nextStop ? getETAText(pos, nextStop, status) : '';
+
     const popHtml = `
       <div class="pop">
         <span class="pop-title">Bus ${label}</span>
-        <div class="pop-row">Route <span>${routeCode}</span></div>
-        ${stopId ? `<div class="pop-row">Near stop <span>#${stopId}</span></div>` : ''}
-        <div class="pop-row">Speed <span>${Math.round((pos.speed || 0) * 3.6)} km/h</span></div>
+        <div class="pop-row">Route <span>${routeCode}</span> &nbsp;·&nbsp; ${Math.round((pos.speed || 0) * 3.6)} km/h</div>
+        ${nextStop ? `
+        <div class="pop-next-stop">
+          <div class="pop-next-label">${stopLabel}</div>
+          <div class="pop-next-name">${nextStop.name}</div>
+          ${eta ? `<div class="pop-eta">${eta}</div>` : ''}
+        </div>` : stopId ? `<div class="pop-row">Stop <span>#${stopId}</span></div>` : ''}
         <span class="pop-status ${isMoving ? '' : 'stopped'}">${statusText}</span>
       </div>`;
 
@@ -674,6 +727,7 @@
 
       state.routeInfo = route;
       state.stopsAll  = stops;
+      buildStopMap();
 
       // Update page metadata
       const routeName = route.route_long_name || route.route_desc || 'Metro Line';
