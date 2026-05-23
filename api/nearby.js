@@ -1,7 +1,7 @@
-// Returns Metro route codes with stops within RADIUS_KM of the given coordinates.
-// Falls back gracefully if the Metro stops endpoint is unavailable.
+// Returns Metro route codes near the given coords, sorted by distance to nearest stop.
+// Response: { routes: [{code, distanceM}], fallback: bool }
 
-const RADIUS_KM = 0.6; // ~10-min walk
+const RADIUS_KM = 0.8; // ~10-min walk
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -25,23 +25,33 @@ export default async function handler(req, res) {
     if (!r.ok) throw new Error(`Metro stops API returned ${r.status}`);
     const stops = await r.json();
 
-    const nearby = new Set();
+    // Track minimum distance (km) per route code
+    const routeMinDist = new Map();
+
     for (const stop of stops) {
       const sLat = stop.geometry?.coordinates?.[1] ?? stop.stop_lat ?? stop.lat;
       const sLng = stop.geometry?.coordinates?.[0] ?? stop.stop_lon ?? stop.lon;
       if (!sLat || !sLng) continue;
-      if (haversineKm(lat, lng, parseFloat(sLat), parseFloat(sLng)) > RADIUS_KM) continue;
 
-      // route_id may be a string, number, or array depending on API version
+      const distKm = haversineKm(lat, lng, parseFloat(sLat), parseFloat(sLng));
+      if (distKm > RADIUS_KM) continue;
+
       const rid = stop.route_id ?? stop.routes;
-      if (Array.isArray(rid)) rid.forEach(id => nearby.add(String(id)));
-      else if (rid != null) nearby.add(String(rid));
+      const codes = Array.isArray(rid) ? rid.map(String) : (rid != null ? [String(rid)] : []);
+      for (const code of codes) {
+        const prev = routeMinDist.get(code);
+        if (prev === undefined || distKm < prev) routeMinDist.set(code, distKm);
+      }
     }
 
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
-    res.json({ routes: [...nearby].sort(), fallback: false });
+    const routes = [...routeMinDist.entries()]
+      .sort(([, a], [, b]) => a - b)
+      .slice(0, 10)
+      .map(([code, distKm]) => ({ code, distanceM: Math.round(distKm * 1000) }));
+
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    res.json({ routes, fallback: false });
   } catch (err) {
-    // Caller will fall back to showing featured routes
     res.json({ routes: [], fallback: true, reason: err.message });
   }
 }

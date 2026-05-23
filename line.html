@@ -62,6 +62,23 @@
     }
     #back-btn:hover { background: rgba(255,255,255,0.32); }
 
+    #fav-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: rgba(255,255,255,0.75);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+      padding: 0;
+    }
+    #fav-btn:hover { background: rgba(255,255,255,0.32); }
+    #fav-btn svg { width: 17px; height: 17px; }
+    #fav-btn.active { color: #FFD60A; }
+
     #route-pill {
       display: flex;
       align-items: center;
@@ -347,6 +364,11 @@
         <span id="direction-label"></span>
         <button id="direction-toggle" disabled aria-label="Switch direction">⇅</button>
       </div>
+      <button id="fav-btn" aria-label="Add to favorites">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </button>
     </div>
     <div id="status-bar">
       <span id="last-updated">Connecting…</span>
@@ -624,6 +646,37 @@
     document.getElementById('direction-toggle').textContent = `⇅ ${dir === 0 ? d1 : d0}`;
   }
 
+  // ── FAVORITES ──
+  const FAV_KEY = 'favorite_lines';
+
+  function getFavs() { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); }
+
+  function isFaved() { return getFavs().some(f => f.slug === slug); }
+
+  function updateFavBtn() {
+    const btn   = document.getElementById('fav-btn');
+    const faved = isFaved();
+    btn.innerHTML = faved
+      ? `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+         </svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+         </svg>`;
+    btn.setAttribute('aria-label', faved ? 'Remove from favorites' : 'Add to favorites');
+    btn.classList.toggle('active', faved);
+  }
+
+  document.getElementById('fav-btn').addEventListener('click', () => {
+    const favs = getFavs().filter(f => f.slug !== slug);
+    if (!isFaved()) {
+      const color = state.routeInfo?.route_color ? `#${state.routeInfo.route_color}` : agencyCfg.color;
+      favs.unshift({ slug, code: routeCode, label: `${agencyCfg.shortName} ${routeCode}`, color });
+    }
+    localStorage.setItem(FAV_KEY, JSON.stringify(favs.slice(0, 20)));
+    updateFavBtn();
+  });
+
   // ── WEBSOCKET ──
   let ws = null, wsRetryTimer = null;
 
@@ -725,6 +778,7 @@
       renderRoute();
       renderStops();
       saveRecent();
+      updateFavBtn();
 
       if (routeLayer.getBounds().isValid()) map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
 

@@ -32,12 +32,11 @@
       background: #fff;
       border-bottom: 1px solid var(--border);
     }
-
     .app-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 13px 18px 8px;
+      padding: 13px 18px 13px;
     }
     .wordmark {
       font-size: 1rem;
@@ -66,57 +65,16 @@
     }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-    /* Search row */
-    .search-wrap { padding: 0 14px 12px; }
-    .search-form {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 0 4px 0 12px;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .search-form:focus-within {
-      border-color: var(--metro);
-      box-shadow: 0 0 0 3px rgba(0,114,206,0.1);
-    }
-    .search-icon { width: 16px; height: 16px; flex-shrink: 0; color: var(--subtle); }
-    .search-input {
-      flex: 1;
-      padding: 9px 10px;
-      border: none;
-      background: transparent;
-      font-size: 0.9rem;
-      color: var(--text);
-      outline: none;
-    }
-    .search-input::placeholder { color: var(--subtle); }
-    .search-btn {
-      padding: 7px 12px;
-      background: var(--metro);
-      color: #fff;
-      border: none;
-      border-radius: 7px;
-      font-weight: 700;
-      font-size: 0.82rem;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .search-btn:hover { background: #005fad; }
-
     /* ── MAIN ── */
     main {
       max-width: 680px;
       margin: 0 auto;
-      padding: 1.25rem 1.1rem 4rem;
+      padding: 1.25rem 1.1rem 0;
     }
 
     /* ── LOCATION SECTION ── */
     #loc-section { margin-bottom: 1.5rem; }
 
-    /* Idle CTA */
     .loc-cta-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -124,22 +82,10 @@
       padding: 1.75rem 1.5rem;
       text-align: center;
     }
-    .loc-cta-icon {
-      font-size: 2rem;
-      margin-bottom: 0.6rem;
-      line-height: 1;
-    }
-    .loc-cta-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.35rem;
-    }
+    .loc-cta-icon { font-size: 2rem; margin-bottom: 0.6rem; line-height: 1; }
+    .loc-cta-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
     .loc-cta-sub {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 1.1rem;
-      line-height: 1.5;
+      font-size: 0.82rem; color: var(--muted); margin-bottom: 1.1rem; line-height: 1.5;
     }
     .loc-cta-btn {
       display: inline-flex;
@@ -158,7 +104,6 @@
     .loc-cta-btn:hover { background: #005fad; }
     .loc-cta-btn svg { width: 16px; height: 16px; }
 
-    /* Loading row */
     .loc-loading-row {
       display: flex;
       align-items: center;
@@ -181,7 +126,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Active — nearby results */
     .nearby-bar {
       display: flex;
       align-items: center;
@@ -209,7 +153,7 @@
     }
     .nearby-change-btn:hover { text-decoration: underline; }
 
-    /* Route rows */
+    /* ── ROUTE ROWS ── */
     .route-list {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -227,7 +171,7 @@
       transition: background 0.12s;
     }
     .route-row:last-child { border-bottom: none; }
-    .route-row:hover { background: #F8FAFC; }
+    .route-row:hover  { background: #F8FAFC; }
     .route-row:active { background: #EFF4FB; }
     .route-row-badge {
       min-width: 46px;
@@ -251,6 +195,13 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .route-row-dist {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--subtle);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
     .route-row-arrow { flex-shrink: 0; color: var(--subtle); }
     .no-nearby {
       padding: 1.25rem;
@@ -258,16 +209,6 @@
       color: var(--muted);
       text-align: center;
     }
-    .view-all-link {
-      display: block;
-      text-align: center;
-      margin-top: 0.75rem;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--metro);
-      text-decoration: none;
-    }
-    .view-all-link:hover { text-decoration: underline; }
 
     /* ── SECTION HEAD ── */
     .section-head {
@@ -304,8 +245,32 @@
     .recent-chip:hover { border-color: var(--metro); color: var(--metro); }
     .recent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-    /* ── BUS GRID (all routes) ── */
-    #all-routes { margin-bottom: 1.75rem; }
+    /* ── VIEW ALL ROUTES ── */
+    #all-routes-section { margin-bottom: 1.75rem; }
+
+    .all-routes-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--metro);
+      cursor: pointer;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .all-routes-btn:hover { background: #F8FAFC; }
+    .all-routes-btn svg { transition: transform 0.2s; }
+    .all-routes-btn.open svg { transform: rotate(180deg); }
+
+    #all-routes-list {
+      margin-top: 0.75rem;
+    }
     .bus-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
@@ -322,7 +287,6 @@
       border-radius: 12px;
       text-decoration: none;
       color: var(--text);
-      cursor: pointer;
       transition: box-shadow 0.15s, transform 0.12s, border-color 0.15s;
     }
     .bus-card:hover {
@@ -331,7 +295,6 @@
       border-color: #C5D6EE;
     }
     .bus-badge {
-      background: var(--metro);
       color: #fff;
       font-weight: 800;
       font-size: 0.86rem;
@@ -349,28 +312,112 @@
       max-width: 64px;
     }
 
-    /* ── AGENCY CARD ── */
-    .agency-card {
+    .routes-loading {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 1rem 1.1rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      justify-content: center;
+      gap: 10px;
+      padding: 1.5rem;
+      font-size: 0.84rem;
+      color: var(--muted);
     }
-    .agency-badge {
-      font-weight: 800;
-      font-size: 0.75rem;
-      padding: 6px 9px;
-      border-radius: 8px;
-      flex-shrink: 0;
+
+    /* ── BOTTOM BAR ── */
+    #bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 50;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding: 10px 14px max(env(safe-area-inset-bottom, 0px), 10px);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    }
+    .bar-inner { max-width: 680px; margin: 0 auto; }
+
+    .search-form {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0 4px 0 12px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-form:focus-within {
+      border-color: var(--metro);
+      box-shadow: 0 0 0 3px rgba(0,114,206,0.1);
+    }
+    .search-icon { width: 16px; height: 16px; flex-shrink: 0; color: var(--subtle); }
+    .search-input {
+      flex: 1;
+      padding: 10px 10px;
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      color: var(--text);
+      outline: none;
+    }
+    .search-input::placeholder { color: var(--subtle); }
+    .search-btn {
+      padding: 7px 12px;
+      background: var(--metro);
       color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      min-height: 36px;
     }
-    .agency-badge.bbb { background: #2A5FA5; }
-    .agency-info { font-size: 0.82rem; line-height: 1.5; }
-    .agency-info strong { font-size: 0.86rem; color: var(--text); }
-    .agency-info p { color: var(--muted); margin-top: 2px; }
+    .search-btn:hover { background: #005fad; }
+
+    /* Favorites row in bottom bar */
+    #fav-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .fav-row-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #fav-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    #fav-chips::-webkit-scrollbar { display: none; }
+    .fav-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .fav-chip:hover { opacity: 0.85; }
+    .fav-chip-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.55);
+      flex-shrink: 0;
+    }
 
     @media (max-width: 420px) {
       .bus-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -388,16 +435,6 @@
       LIVE
     </div>
   </div>
-  <div class="search-wrap">
-    <form class="search-form" id="search-form" role="search">
-      <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-        <circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.5" y1="12.5" x2="17" y2="17"/>
-      </svg>
-      <input class="search-input" id="search-input" type="search"
-        placeholder="Route number (720, 4, G…)" autocomplete="off" aria-label="Search for a route" />
-      <button class="search-btn" type="submit">Track</button>
-    </form>
-  </div>
 </div>
 
 <main>
@@ -405,7 +442,6 @@
   <!-- LOCATION SECTION -->
   <section id="loc-section">
 
-    <!-- Idle: prompt to share location -->
     <div id="loc-idle">
       <div class="loc-cta-card">
         <div class="loc-cta-icon">📍</div>
@@ -421,7 +457,6 @@
       </div>
     </div>
 
-    <!-- Loading -->
     <div id="loc-loading" hidden>
       <div class="loc-loading-row">
         <div class="spinner-sm"></div>
@@ -429,7 +464,6 @@
       </div>
     </div>
 
-    <!-- Active: nearby routes -->
     <div id="loc-active" hidden>
       <div class="nearby-bar">
         <div class="nearby-bar-label">
@@ -442,7 +476,6 @@
         <button class="nearby-change-btn" id="loc-reset" aria-label="Change location">Change</button>
       </div>
       <div class="route-list" id="nearby-list"></div>
-      <a class="view-all-link" href="#all-routes">View all popular routes ↓</a>
     </div>
 
   </section>
@@ -455,75 +488,73 @@
     <div class="recent-list" id="recent-list"></div>
   </section>
 
-  <!-- ALL POPULAR ROUTES -->
-  <section id="all-routes" aria-label="All popular Metro bus routes">
-    <div class="section-head">
-      <span class="section-label" id="all-routes-label">Popular Routes</span>
-    </div>
-    <div class="bus-grid" id="bus-grid"></div>
-  </section>
-
-  <!-- OTHER AGENCIES -->
-  <section aria-label="Other agencies">
-    <div class="section-head">
-      <span class="section-label">Other Agencies</span>
-    </div>
-    <div class="agency-card">
-      <div class="agency-badge bbb">BBB</div>
-      <div class="agency-info">
-        <strong>Big Blue Bus (Santa Monica)</strong>
-        <p>Coming soon — real-time vehicle feed is currently offline.</p>
-      </div>
-    </div>
+  <!-- VIEW ALL ROUTES -->
+  <section id="all-routes-section" aria-label="All Metro bus routes">
+    <button class="all-routes-btn" id="all-routes-btn" aria-expanded="false">
+      <span id="all-routes-btn-label">View all Metro bus lines</span>
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M4.5 6.75 9 11.25l4.5-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div id="all-routes-list" hidden></div>
   </section>
 
 </main>
 
+<!-- STICKY BOTTOM BAR -->
+<div id="bottom-bar">
+  <div class="bar-inner">
+    <form class="search-form" id="search-form" role="search">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.5" y1="12.5" x2="17" y2="17"/>
+      </svg>
+      <input class="search-input" id="search-input" type="search"
+        placeholder="Route number (720, 4, 20…)" autocomplete="off" aria-label="Search for a route" />
+      <button class="search-btn" type="submit">Track</button>
+    </form>
+    <div id="fav-row" role="list" aria-label="Favorite routes">
+      <span class="fav-row-label">Favorites</span>
+      <div id="fav-chips"></div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-import { METRO_BUS_FEATURED } from '/js/config.js';
-
-// ── ROUTE LOOKUP ──
-const routeMap = new Map(METRO_BUS_FEATURED.map(r => [r.code, r.desc]));
-
-// ── RENDER GRID ──
-function renderGrid(container, routes) {
-  container.innerHTML = '';
-  routes.forEach(route => {
-    const a = document.createElement('a');
-    a.className = 'bus-card';
-    a.href = `/line/metro-${route.code}`;
-    a.innerHTML = `<div class="bus-badge">${route.code}</div><span class="bus-desc">${route.desc}</span>`;
-    container.appendChild(a);
-  });
+// ── DISTANCE FORMATTING ──
+function fmtDist(meters) {
+  const feet = Math.round(meters * 3.28084);
+  if (feet < 1000) return `${feet} ft`;
+  return `${(meters / 1609.344).toFixed(1)} mi`;
 }
-renderGrid(document.getElementById('bus-grid'), METRO_BUS_FEATURED);
+
+// ── ARROW SVG ──
+const ARROW_SVG = `<svg class="route-row-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+  <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
 
 // ── RENDER NEARBY LIST ──
-function renderNearbyList(routeCodes) {
+// routes: [{code, distanceM}] sorted by distance
+function renderNearbyList(routes) {
   const list = document.getElementById('nearby-list');
   list.innerHTML = '';
 
-  // Prefer featured routes (have descriptions), then other codes, cap at 12
-  const featured = routeCodes.filter(c => routeMap.has(c));
-  const others   = routeCodes.filter(c => !routeMap.has(c));
-  const toShow   = [...featured, ...others].slice(0, 12);
-
-  if (!toShow.length) {
+  if (!routes.length) {
     list.innerHTML = '<p class="no-nearby">No Metro routes found within walking distance.</p>';
     return;
   }
 
-  toShow.forEach(code => {
-    const desc = routeMap.get(code) || '';
+  routes.forEach(({ code, distanceM }) => {
     const a = document.createElement('a');
     a.className = 'route-row';
     a.href = `/line/metro-${code}`;
+    const distHtml = distanceM != null
+      ? `<span class="route-row-dist">${fmtDist(distanceM)}</span>`
+      : '';
     a.innerHTML = `
       <span class="route-row-badge">${code}</span>
-      ${desc ? `<span class="route-row-name">${desc}</span>` : ''}
-      <svg class="route-row-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`;
+      <span class="route-row-name">Metro ${code}</span>
+      ${distHtml}
+      ${ARROW_SVG}`;
     list.appendChild(a);
   });
 }
@@ -537,27 +568,21 @@ function showState(state) {
   locIdle.hidden    = state !== 'idle';
   locLoading.hidden = state !== 'loading';
   locActive.hidden  = state !== 'active';
-  if (state === 'active') {
-    document.getElementById('all-routes-label').textContent = 'All Popular Routes';
-  } else {
-    document.getElementById('all-routes-label').textContent = 'Popular Routes';
-  }
 }
 
 // ── ACTIVATE WITH COORDS ──
 async function activateLocation(lat, lng, area) {
   document.getElementById('area-name').textContent = area;
+  showState('loading');
 
-  let routeCodes = METRO_BUS_FEATURED.map(r => r.code); // fallback
+  let routes = [];
   try {
-    const res = await fetch(`/api/nearby?lat=${lat}&lng=${lng}`);
+    const res  = await fetch(`/api/nearby?lat=${lat}&lng=${lng}`);
     const data = await res.json();
-    if (!data.fallback && data.routes?.length) {
-      routeCodes = data.routes;
-    }
-  } catch (_) { /* use fallback */ }
+    if (!data.fallback) routes = data.routes || [];
+  } catch (_) {}
 
-  renderNearbyList(routeCodes);
+  renderNearbyList(routes);
   showState('active');
   localStorage.setItem('saved_location', JSON.stringify({ lat, lng, area }));
 }
@@ -579,7 +604,7 @@ async function doLocate() {
         const a = d.address || {};
         area = a.neighbourhood || a.suburb || a.city_district
              || a.town || a.city || 'Your Area';
-      } catch (_) { /* keep default */ }
+      } catch (_) {}
 
       await activateLocation(lat, lng, area);
     },
@@ -593,12 +618,9 @@ document.getElementById('loc-reset').addEventListener('click', () => {
   showState('idle');
 });
 
-// Restore saved location on page load
 const saved = JSON.parse(localStorage.getItem('saved_location') || 'null');
-if (saved) {
-  showState('loading');
-  activateLocation(saved.lat, saved.lng, saved.area);
-}
+if (saved) activateLocation(saved.lat, saved.lng, saved.area);
+else showState('idle');
 
 // ── RECENTLY VIEWED ──
 function loadRecent() {
@@ -617,12 +639,106 @@ function loadRecent() {
 }
 loadRecent();
 
+// ── FAVORITES ──
+function loadFavorites() {
+  const favs = JSON.parse(localStorage.getItem('favorite_lines') || '[]');
+  const row   = document.getElementById('fav-row');
+  const chips = document.getElementById('fav-chips');
+  chips.innerHTML = '';
+
+  if (!favs.length) {
+    row.style.display = 'none';
+    syncPadding();
+    return;
+  }
+
+  row.style.display = 'flex';
+  favs.forEach(fav => {
+    const a = document.createElement('a');
+    a.className = 'fav-chip';
+    a.href = `/line/${fav.slug}`;
+    a.style.background = fav.color || 'var(--metro)';
+    a.setAttribute('role', 'listitem');
+    a.innerHTML = `<span class="fav-chip-dot"></span>${fav.label}`;
+    chips.appendChild(a);
+  });
+
+  syncPadding();
+}
+loadFavorites();
+
+// ── SYNC BOTTOM PADDING ──
+function syncPadding() {
+  const bar = document.getElementById('bottom-bar');
+  document.querySelector('main').style.paddingBottom = (bar.offsetHeight + 20) + 'px';
+}
+syncPadding();
+window.addEventListener('resize', syncPadding);
+
+// ── VIEW ALL ROUTES ──
+let allRoutesLoaded = false;
+let allRoutesOpen   = false;
+
+const allBtn  = document.getElementById('all-routes-btn');
+const allList = document.getElementById('all-routes-list');
+
+allBtn.addEventListener('click', async () => {
+  allRoutesOpen = !allRoutesOpen;
+  allBtn.setAttribute('aria-expanded', String(allRoutesOpen));
+  allBtn.classList.toggle('open', allRoutesOpen);
+  document.getElementById('all-routes-btn-label').textContent = allRoutesOpen
+    ? 'Hide Metro bus lines'
+    : 'View all Metro bus lines';
+
+  if (!allRoutesOpen) {
+    allList.hidden = true;
+    return;
+  }
+
+  allList.hidden = false;
+
+  if (allRoutesLoaded) return;
+
+  allList.innerHTML = `<div class="routes-loading"><div class="spinner-sm"></div> Loading all routes…</div>`;
+
+  try {
+    const res  = await fetch('/api/routes');
+    const data = await res.json();
+    const routes = data.routes || [];
+
+    if (!routes.length) throw new Error('No routes returned');
+
+    const grid = document.createElement('div');
+    grid.className = 'bus-grid';
+    routes.forEach(r => {
+      const a = document.createElement('a');
+      a.className = 'bus-card';
+      a.href = `/line/metro-${r.code}`;
+      a.innerHTML = `
+        <div class="bus-badge" style="background:${r.color || 'var(--metro)'}">${r.code}</div>
+        <span class="bus-desc">${r.name || ''}</span>`;
+      grid.appendChild(a);
+    });
+
+    allList.innerHTML = '';
+    allList.appendChild(grid);
+    allRoutesLoaded = true;
+  } catch (err) {
+    allList.innerHTML = `<p class="no-nearby">Could not load routes — ${err.message}</p>`;
+  }
+});
+
 // ── SEARCH ──
 document.getElementById('search-form').addEventListener('submit', e => {
   e.preventDefault();
   const val = document.getElementById('search-input').value.trim().toUpperCase();
   if (!val) return;
   window.location.href = `/line/metro-${val}`;
+});
+
+// Listen for storage changes (e.g. user favorites from the line page in same session)
+window.addEventListener('storage', e => {
+  if (e.key === 'favorite_lines') loadFavorites();
 });
 </script>
 </body>
