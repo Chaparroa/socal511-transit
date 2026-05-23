@@ -31,7 +31,7 @@ jobs:
       - name: Check for file changes
         id: diff
         run: |
-          if git diff --quiet api/routes.js api/nearby.js; then
+          if git diff --quiet api/routes.js api/nearby.js api/stop-index.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -44,10 +44,10 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: auto/sync-metro-routes
-          commit-message: 'chore: sync Metro bus routes'
-          title: 'chore: sync Metro bus routes'
+          commit-message: 'chore: sync Metro bus routes and stop index'
+          title: 'chore: sync Metro bus routes and stop index'
           body: |
-            Automated monthly sync of active Metro bus routes from the Metro API.
+            Automated monthly sync of active Metro bus routes and stop coordinates from the Metro API.
 
             **Before merging, check:**
             - [ ] Added routes look intentional (new Metro service, not a transient API glitch)
