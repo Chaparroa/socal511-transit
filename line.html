@@ -605,6 +605,7 @@
       const m = vehicleMarkers.get(vehicleId);
       m.setLatLng([lat, lng]);
       m.setIcon(icon);
+      m.setPopupContent(popHtml);
     } else {
       const m = L.marker([lat, lng], { icon, zIndexOffset: 1000 })
         .bindPopup(popHtml, { maxWidth: 240 })
