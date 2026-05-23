@@ -223,8 +223,24 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.25);
     }
 
-    /* ── VEHICLE MARKERS — Transit-app style pill ── */
-    .vehicle-pill {
+    /* ── VEHICLE MARKERS ── */
+    /* Outer wrapper rotates by bearing so arrow always points in direction of travel.
+       Inner pill counter-rotates so route number stays upright at any heading. */
+    .v-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform-origin: 50% 31px; /* rotate around pill center, not arrow tip */
+    }
+    .v-arrow {
+      width: 0; height: 0;
+      border-left: 9px solid transparent;
+      border-right: 9px solid transparent;
+      border-bottom: 14px solid #E16710; /* points "up" in local space = direction of travel */
+      margin-bottom: 3px;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+    }
+    .v-pill {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -240,19 +256,6 @@
       color: #fff;
       letter-spacing: 0.01em;
       white-space: nowrap;
-      position: relative;
-      transform-origin: center bottom;
-    }
-    /* Direction nub */
-    .vehicle-pill::after {
-      content: '';
-      position: absolute;
-      bottom: -7px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
-      border-top: 6px solid var(--vc, #E16710);
     }
 
     /* ── USER LOCATION ── */
@@ -492,9 +495,10 @@
   });
 
   function makeVehicleIcon(bearing) {
+    const b = bearing ?? 0;
     return L.divIcon({
-      html: `<div class="vehicle-pill" style="--vc:${_routeHex}; transform:rotate(${bearing||0}deg)">${routeCode}</div>`,
-      className: '', iconSize: [44,28], iconAnchor: [22,34], popupAnchor: [0,-36],
+      html: `<div class="v-wrap" style="transform:rotate(${b}deg)"><div class="v-arrow" style="border-bottom-color:${_routeHex}"></div><div class="v-pill" style="--vc:${_routeHex};transform:rotate(${-b}deg)">${routeCode}</div></div>`,
+      className: '', iconSize: [44,46], iconAnchor: [22,31], popupAnchor: [0,-32],
     });
   }
 
