@@ -1,0 +1,59 @@
+name: Sync Metro Routes
+
+on:
+  schedule:
+    # Runs on the 1st of every month at 10:00 AM UTC.
+    # Metro does major service changes in June and December;
+    # monthly cadence catches anything mid-cycle too.
+    - cron: '0 10 1 * *'
+  workflow_dispatch:  # allow a manual run from the Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch active Metro routes
+        run: node api/scripts/fetch-routes.js --write
+
+      - name: Check for file changes
+        id: diff
+        run: |
+          if git diff --quiet api/routes.js api/nearby.js; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "--- routes.js diff ---"
+            git diff api/routes.js
+          fi
+
+      - name: Open pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: auto/sync-metro-routes
+          commit-message: 'chore: sync Metro bus routes'
+          title: 'chore: sync Metro bus routes'
+          body: |
+            Automated monthly sync of active Metro bus routes from the Metro API.
+
+            **Before merging, check:**
+            - [ ] Added routes look intentional (new Metro service, not a transient API glitch)
+            - [ ] Removed routes are truly discontinued (not a temporary API outage — if unsure, re-run the workflow a day later to confirm)
+            - [ ] `short` names (arterials) read cleanly on the cards and header
+
+            Merging this PR deploys immediately to production via Vercel.
+          labels: automated,routes
+          draft: false

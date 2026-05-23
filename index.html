@@ -601,7 +601,7 @@ const routesReady = fetch('/api/routes')
   .then(r => r.json())
   .then(({ routes = [] }) => {
     allRoutesData = routes;
-    routes.forEach(r => routeInfoMap.set(r.code, { name: r.name, color: r.color }));
+    routes.forEach(r => routeInfoMap.set(r.code, { name: r.name, short: r.short, color: r.color }));
   })
   .catch(() => {});
 
@@ -618,7 +618,7 @@ function renderNearbyList(routes) {
   routes.forEach(({ code, distanceM }) => {
     const info  = routeInfoMap.get(code) || {};
     const color = info.color || 'var(--metro)';
-    const name  = info.name  || `Metro ${code}`;
+    const name  = info.short || info.name || `Metro ${code}`;
     const a = document.createElement('a');
     a.className = 'route-row';
     a.href = `/line/metro-${code}`;
@@ -802,7 +802,7 @@ allBtn.addEventListener('click', async () => {
         a.href = `/line/metro-${r.code}`;
         a.innerHTML = `
           <div class="bus-badge" style="background:${r.color || 'var(--metro)'}">${r.code}</div>
-          <span class="bus-desc">${r.name || ''}</span>`;
+          <span class="bus-desc">${r.short || r.name || ''}</span>`;
         grid.appendChild(a);
       });
       container.appendChild(grid);

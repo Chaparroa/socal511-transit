@@ -1,52 +1,117 @@
-// Returns active Metro bus routes.
-// Validates each candidate against route_overview — routes returning empty data are excluded.
-// Result is cached 24h at the CDN edge (stale-while-revalidate 7d), so cold hits are rare.
+// Returns active Metro bus routes from a statically baked list.
+//
+// Why static: Metro's public API has no single /routes endpoint. The previous
+// approach made 91 parallel route_overview calls per cache miss, causing
+// intermittent timeouts that baked empty names into the 24h CDN cache.
+//
+// To refresh this list (e.g. Metro adds/removes a route or changes a name):
+//   node api/scripts/fetch-routes.js
+// then paste the output ROUTES array here.
+//
+// Validated against Metro's API 2026-05-23. All bus routes share color #E16710.
+// Fields: code, short (arterials — compact street name for UI labels),
+//         name (full description for page titles and tooltips).
 
-// Candidate routes — validated against Metro's API as of 2026-05-23.
-// Dead routes are pruned at runtime; add new routes here when Metro activates them.
-const CANDIDATE_ROUTES = [
-  '2','4','10','14','16','18','20','28','30','33','37','38','40','45','48','51','53','55',
-  '60','62','66','70','76','78','81','90','92','94','105','108','111','115','117','120',
-  '125','128','152','154','155','158','161','162','164','165','166','167','169','177',
-  '180','182','202','204','205','206','207','209','210','212','215','217','218','222',
-  '224','230','232','233','234','236','240','242','243','244','246','251','256','258',
-  '260','265','267','268','294','344','460','487','489','501','550','577','720','754','761',
+const ROUTES = [
+  { code:'2',   short:'Sunset Bl',                             name:'USC - Westwood via Sunset Bl' },
+  { code:'4',   short:'Santa Monica Bl',                       name:'Downtown LA - Santa Monica via Santa Monica Bl' },
+  { code:'10',  short:'Temple St, Melrose Av',                 name:'Northbound to DTLA - Southbound to Avalon Station' },
+  { code:'14',  short:'Beverly Bl',                            name:'Eastbound to DTLA - Westbound to Cedars-Sinai' },
+  { code:'16',  short:'West 3rd St',                           name:'Downtown LA - West Hollywood via West 3rd St' },
+  { code:'18',  short:'6th St, Whittier Bl',                   name:'Wilshire Western - Montebello Metrolink via 6th St-Whittier Bl' },
+  { code:'20',  short:'Wilshire Bl',                           name:'Downtown LA - Westwood/Santa Monica via Wilshire Bl' },
+  { code:'28',  short:'Olympic Bl',                            name:'Century City - Downtown LA via Olympic Bl' },
+  { code:'30',  short:'Pico Bl',                               name:'Pico Rimpau - Downtown LA - Indiana Station via Pico Bl' },
+  { code:'33',  short:'Venice Bl',                             name:'Downtown LA - Santa Monica via Venice Bl' },
+  { code:'37',  short:'Adams Bl',                              name:'Eastbound to DTLA - Westbound to Cedars-Sinai via Adams Bl' },
+  { code:'38',  short:'Jefferson Bl',                          name:'Eastbound to DTLA - Westbound to Washington/Fairfax via Washington Bl' },
+  { code:'40',  short:'MLK Bl, Hawthorne Bl',                  name:'Downtown LA - South Bay Galleria via ML King Bl-Hawthorne Bl' },
+  { code:'45',  short:'Broadway',                              name:'Lincoln Heights - Downtown LA - Harbor Freeway Station via Broadway' },
+  { code:'48',  short:'Main St, South San Pedro St',           name:'Northbound to DTLA - Southbound to Avalon Station via Main St' },
+  { code:'51',  short:'7th St, Avalon Bl',                     name:'MacArthur Park Station - CSU Dominguez Hills via 7th St-Avalon Bl' },
+  { code:'53',  short:'Central Av',                            name:'Downtown LA - Willowbrook/Rosa Parks - CSU Dominguez Hills via Central Av' },
+  { code:'55',  short:'Compton Av',                            name:'Downtown LA - Willowbrook/Rosa Parks Station via Compton Av' },
+  { code:'60',  short:'Long Beach Bl',                         name:'Downtown LA - Artesia Station via Long Beach Bl' },
+  { code:'62',  short:'Telegraph Rd',                          name:'Downtown LA - Hawaiian Gardens via Telegraph Rd' },
+  { code:'66',  short:'8th St, Olympic Bl',                    name:'Wilshire Center - Downtown LA - Montebello via 8th St-Olympic Bl' },
+  { code:'70',  short:'Cesar Chavez Av, Garvey Av',            name:'Downtown LA - El Monte via Cesar Chavez Av-Atlantic Bl-Garvey Av' },
+  { code:'76',  short:'Valley Bl',                             name:'Downtown LA - El Monte via Valley Bl' },
+  { code:'78',  short:'Las Tunas Av, Huntington Dr',           name:'Downtown LA - Arcadia via Las Tunas Av & Huntington Dr' },
+  { code:'81',  short:'Figueroa St',                           name:'Eagle Rock - Downtown LA - Harbor Freeway Station via Figueroa St' },
+  { code:'90',  short:'Glendale Av, Foothill Bl',              name:'LA Civic Center - Sunland - North Hollywood via Glendale Av-Foothill Bl' },
+  { code:'92',  short:'Glendale Bl, Glenoaks Bl',              name:'Downtown LA - Sylmar Station via Glendale-Glenoaks Bl' },
+  { code:'94',  short:'San Fernando Rd, Magnolia Bl',          name:'Downtown LA - Glendale - Burbank - North Hollywood via San Fernando Rd' },
+  { code:'105', short:'La Cienega Bl, Vernon Av',              name:'West Hollywood - Vernon via La Cienega Bl-Vernon Av' },
+  { code:'108', short:'Slauson Av',                            name:'Marina Del Rey - Pico Rivera via Slauson Av' },
+  { code:'111', short:'Florence Av',                           name:'LAX City Bus Center - Norwalk Station via Florence Av' },
+  { code:'115', short:'Manchester Av, Firestone Bl',           name:'Playa Del Rey - Norwalk via Manchester Av-Firestone Bl' },
+  { code:'117', short:'Century Bl, Imperial Hwy',              name:'LAX City Bus Center - Downey via Century Bl-Imperial Hwy' },
+  { code:'120', short:'Imperial Hwy',                          name:'Aviation/LAX Station - Whittwood Center via Imperial Hwy' },
+  { code:'125', short:'Rosecrans Av',                          name:'El Segundo - Norwalk Station via Rosecrans Av' },
+  { code:'128', short:'Alondra Bl',                            name:'Compton Station - Cerritos Towne Center via Alondra Bl' },
+  { code:'152', short:'Roscoe Bl',                             name:'West Hills Medical Center - North Hollywood Station via Roscoe Bl' },
+  { code:'154', short:'Oxnard St, Burbank Bl',                 name:'Sepulveda Bl - Burbank Station via Oxnard St-Burbank Bl' },
+  { code:'155', short:'Riverside Dr, Olive St',                name:'Sherman Oaks - Burbank Station via Riverside Dr-Olive St' },
+  { code:'158', short:'Devonshire, Woodman',                   name:'Chatsworth Station - Sherman Oaks via Devonshire-Woodman' },
+  { code:'161', short:'Westlake Village, Calabasas',           name:'Thousand Oaks - Agoura Hills - Calabasas - Warner Center' },
+  { code:'162', short:'Sherman Wy, Vineland Av',               name:'Woodland Hills - West Hills - North Hollywood via Sherman Way-Vineland Av' },
+  { code:'164', short:'Victory Bl',                            name:'West Hills - Burbank via Victory Bl' },
+  { code:'165', short:'Vanowen St',                            name:'West Hills - Burbank via Vanowen St' },
+  { code:'166', short:'Nordhoff St, Osborne St',               name:'Canoga Av - Sun Valley via Nordhoff St-Osborne St' },
+  { code:'167', short:'Plummer, Coldwater Canyon',             name:'Chatsworth Station - Studio City via Plummer-Coldwater Canyon' },
+  { code:'169', short:'Valley Circle, Saticoy St',             name:'Warner Center - Burbank Airport via Valley Circle-Saticoy St' },
+  { code:'177', short:'I-210, Del Mar Bl',                     name:'JPL - Pasadena (Caltech)' },
+  { code:'180', short:'Los Feliz Bl, Colorado Bl',             name:'Hollywood - Glendale - Pasadena via Los Feliz-Colorado Bl' },
+  { code:'182', short:'Fletcher Dr, York Bl',                  name:'Northeast LA - East Hollywood via Fletcher Dr-York Bl' },
+  { code:'202', short:'Willowbrook Av',                        name:'Rosa Parks Station - Compton - Del Amo Station via Willowbrook Av' },
+  { code:'204', short:'Vermont Av',                            name:'Hollywood - Athens via Vermont Av' },
+  { code:'205', short:'Wilmington Av, Vermont Av',             name:'Rosa Parks Station - San Pedro via Wilmington Av-Vermont Av' },
+  { code:'206', short:'Normandie Av',                          name:'Hollywood - Athens via Normandie Av' },
+  { code:'207', short:'Western Av',                            name:'Hollywood - Athens via Western Av' },
+  { code:'209', short:'Van Ness Av, Arlington Av',             name:'Expo/Crenshaw Station - Crenshaw Station via Van Ness Av-Arlington Av' },
+  { code:'210', short:'Crenshaw Bl',                           name:'Hollywood/Vine Station - South Bay Galleria via Vine St-Crenshaw Bl' },
+  { code:'212', short:'La Brea Av',                            name:'Hollywood/Vine Station - Hawthorne/Lennox Station via La Brea Av' },
+  { code:'215', short:'Inglewood Av',                          name:'Inglewood - South Bay Galleria via Prairie Av-Inglewood Av' },
+  { code:'217', short:'Hollywood Bl, Fairfax Av',              name:'Hollywood/Vine Station - La Cienega Station via Hollywood Bl-Fairfax Av' },
+  { code:'218', short:'Laurel Canyon Bl, Fairfax Bl',          name:'Studio City - Cedars Sinai via Laurel Canyon Bl-Fairfax Bl' },
+  { code:'222', short:'Hollywood Wy, Riverside Dr',            name:'Lankershim/Tuxford - Burbank Airport - Hollywood via Hollywood Way' },
+  { code:'224', short:'San Fernando Rd, Lankershim Bl',        name:'Sylmar Station - Universal City Station via San Fernando Rd & Lankershim Bl' },
+  { code:'230', short:'Laurel Canyon Bl',                      name:'Sylmar Station - Studio City via Laurel Canyon Bl' },
+  { code:'232', short:'Sepulveda Bl, Pacific Coast Hwy',       name:'LAX City Bus Center - Long Beach via Sepulveda Bl-Pacific Coast Hwy' },
+  { code:'233', short:'Van Nuys Bl',                           name:'Lake View Terrace - Sherman Oaks via Van Nuys Bl' },
+  { code:'234', short:'Sepulveda Bl',                          name:'Mission College - Sylmar Station - Sherman Oaks via Sepulveda Bl' },
+  { code:'236', short:'Balboa Bl, Rinaldi St',                 name:'Sylmar - Encino via Balboa Bl-Rinaldi St-Foothill Bl' },
+  { code:'240', short:'Reseda Bl, Ventura Bl',                 name:'Northridge - Universal City Station via Reseda Bl-Ventura Bl' },
+  { code:'242', short:'Tampa Av',                              name:'Devonshire St - Woodland Hills via Tampa Av-Winnetka Av' },
+  { code:'243', short:'Winnetka Av',                           name:'Northridge - Tarzana via Tampa Av-Winnetka Av' },
+  { code:'244', short:'De Soto Av',                            name:'Chatsworth Station - Ventura Bl via De Soto Av' },
+  { code:'246', short:'Avalon Bl',                             name:'San Pedro - Harbor Gateway Transit Center via Avalon Bl' },
+  { code:'251', short:'Soto St',                               name:'Eagle Rock - Cypress Park - Long Beach Blvd Station via Eagle Rock Bl-Soto St' },
+  { code:'256', short:'Eastern Av, Washington Bl',             name:'CSU LA - Sierra Madre Villa Station via Eastern Av-Washington Bl' },
+  { code:'258', short:'Fremont Av, Eastern Av',                name:'Highland Park/South Pasadena - Paramount via Fremont Av-Eastern Av' },
+  { code:'260', short:'Fair Oaks Av, Atlantic Bl',             name:'Pasadena - Artesia Station via Fair Oaks Av-Atlantic Bl' },
+  { code:'265', short:'Paramount Bl',                          name:'Pico Rivera - Lakewood Center Mall via Paramount Bl' },
+  { code:'267', short:'Del Mar Bl, Temple City Bl',            name:'Pasadena - El Monte Station via Del Mar Bl-Temple City Bl' },
+  { code:'268', short:'Baldwin Av',                            name:'Sierra Madre Villa Station - El Monte Station via Baldwin Av' },
+  { code:'294', short:'San Fernando Rd',                       name:'Burbank Station - Sylmar Station via San Fernando Rd' },
+  { code:'344', short:'Hawthorne Bl',                          name:'Harbor Gateway - Palos Verdes via Hawthorne Bl' },
+  { code:'460', short:'I-110, I-105 Freeways',                 name:'Downtown LA - Disneyland via Harbor Transitway-105 Freeway' },
+  { code:'487', short:'Downtown LA – Temple City',             name:'Downtown LA - Sierra Madre Villa Station - Temple City' },
+  { code:'489', short:'Downtown LA – Temple City',             name:'Downtown LA - Sierra Madre Villa Station - Temple City' },
+  { code:'501', short:'SR-134 Freeway',                        name:'North Hollywood - Pasadena Express via SR-134' },
+  { code:'550', short:'Harbor Transitway',                     name:'Exposition Park/USC - Harbor Gateway via Harbor Transitway' },
+  { code:'577', short:'I-605 Freeway',                         name:'El Monte Station - Long Beach VA Medical Center via I-605 Freeway' },
+  { code:'720', short:'Wilshire Bl',                           name:'Santa Monica - Downtown LA via Wilshire Bl' },
+  { code:'754', short:'Vermont Av',                            name:'Hollywood - Athens via Vermont Av' },
+  { code:'761', short:'Van Nuys Bl, Sepulveda Bl',             name:'Sylmar Station - E Line (Expo) via Van Nuys Bl-Sepulveda Bl' },
 ];
 
-async function fetchRouteInfo(code) {
-  const fallback = { code, name: '', color: '#0072CE' };
-  try {
-    const r = await fetch(`https://api.metro.net/LACMTA/route_overview/${code}`, {
-      signal: AbortSignal.timeout(4000),
-    });
-    if (!r.ok) return fallback;
-    const data = await r.json();
-    // Empty array means Metro confirms this route has no active data — exclude it.
-    // Any other failure (timeout, network error) keeps the route with default styling.
-    const route = Array.isArray(data) && data.length ? data[0] : null;
-    if (!route) return null;
-    return {
-      code,
-      name:  route.description || route.route_long_name || route.route_desc || '',
-      color: route.route_color ? `#${route.route_color.replace(/^#/, '')}` : '#0072CE',
-    };
-  } catch {
-    return fallback;
-  }
-}
+const COLOR = '#E16710'; // Metro standard orange for all bus routes
 
 export default async function handler(req, res) {
-  const results = await Promise.all(CANDIDATE_ROUTES.map(fetchRouteInfo));
-
-  const routes = results
-    .filter(Boolean)
-    .sort((a, b) => {
-      const na = parseInt(a.code), nb = parseInt(b.code);
-      if (!isNaN(na) && !isNaN(nb)) return na - nb;
-      return a.code.localeCompare(b.code);
-    });
-
-  // Long cache — 24h at CDN edge, serve stale for up to 7d while revalidating
+  // No outbound API calls — static data is always fast and consistent.
   res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
-  res.json({ routes });
+  res.json({
+    routes: ROUTES.map(r => ({ ...r, color: COLOR })),
+  });
 }
