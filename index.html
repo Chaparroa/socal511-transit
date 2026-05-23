@@ -9,15 +9,13 @@
 
     :root {
       --metro:   #0072CE;
-      --bg:      #F4F6F9;
+      --bg:      #F2F4F8;
       --surface: #FFFFFF;
       --border:  #E2E8F0;
       --text:    #0F1923;
       --muted:   #64748B;
       --subtle:  #94A3B8;
     }
-
-    html { scroll-behavior: smooth; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -26,14 +24,20 @@
       min-height: 100dvh;
     }
 
-    /* ── APP BAR ── */
+    /* ── STICKY HEADER ── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+
     .app-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 20px 10px;
-      background: #fff;
-      border-bottom: 1px solid var(--border);
+      padding: 13px 18px 8px;
     }
     .wordmark {
       font-size: 1rem;
@@ -46,7 +50,7 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       letter-spacing: 0.06em;
       color: #16A34A;
@@ -60,135 +64,233 @@
       background: #16A34A;
       animation: pulse 1.8s ease-in-out infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-    /* ── SEARCH HERO ── */
-    .search-hero {
-      background: #fff;
-      padding: 18px 20px 20px;
-      border-bottom: 1px solid var(--border);
-    }
+    /* Search row */
+    .search-wrap { padding: 0 14px 12px; }
     .search-form {
       display: flex;
       align-items: center;
       gap: 0;
       background: var(--bg);
       border: 1.5px solid var(--border);
-      border-radius: 12px;
-      padding: 0 4px 0 14px;
+      border-radius: 10px;
+      padding: 0 4px 0 12px;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .search-form:focus-within {
       border-color: var(--metro);
-      box-shadow: 0 0 0 3px rgba(0,114,206,0.12);
+      box-shadow: 0 0 0 3px rgba(0,114,206,0.1);
     }
-    .search-icon {
-      width: 18px; height: 18px;
-      flex-shrink: 0;
-      color: var(--subtle);
-    }
+    .search-icon { width: 16px; height: 16px; flex-shrink: 0; color: var(--subtle); }
     .search-input {
       flex: 1;
-      padding: 11px 10px;
+      padding: 9px 10px;
       border: none;
       background: transparent;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: var(--text);
       outline: none;
     }
     .search-input::placeholder { color: var(--subtle); }
     .search-btn {
-      padding: 8px 14px;
+      padding: 7px 12px;
       background: var(--metro);
       color: #fff;
       border: none;
-      border-radius: 8px;
+      border-radius: 7px;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       cursor: pointer;
       transition: background 0.15s;
-      white-space: nowrap;
     }
     .search-btn:hover { background: #005fad; }
 
-    .locate-row {
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    /* ── MAIN ── */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 1.25rem 1.1rem 4rem;
     }
-    .locate-btn {
-      display: flex;
+
+    /* ── LOCATION SECTION ── */
+    #loc-section { margin-bottom: 1.5rem; }
+
+    /* Idle CTA */
+    .loc-cta-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+    }
+    .loc-cta-icon {
+      font-size: 2rem;
+      margin-bottom: 0.6rem;
+      line-height: 1;
+    }
+    .loc-cta-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+    .loc-cta-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 1.1rem;
+      line-height: 1.5;
+    }
+    .loc-cta-btn {
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 0;
-      background: none;
+      gap: 7px;
+      padding: 11px 22px;
+      background: var(--metro);
+      color: #fff;
       border: none;
-      color: var(--metro);
-      font-size: 0.85rem;
-      font-weight: 600;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
       cursor: pointer;
+      transition: background 0.15s;
     }
-    .locate-btn:hover { text-decoration: underline; }
-    .locate-btn svg { width: 15px; height: 15px; }
-    .locate-spinner {
-      width: 15px; height: 15px;
+    .loc-cta-btn:hover { background: #005fad; }
+    .loc-cta-btn svg { width: 16px; height: 16px; }
+
+    /* Loading row */
+    .loc-loading-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .spinner-sm {
+      width: 18px; height: 18px;
       border: 2px solid var(--border);
       border-top-color: var(--metro);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
-      display: none;
+      flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .locate-area {
-      font-size: 0.82rem;
-      color: var(--muted);
-      display: none;
-    }
 
-    /* ── MAIN ── */
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 1.5rem 1.25rem 4rem;
+    /* Active — nearby results */
+    .nearby-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
     }
+    .nearby-bar-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .nearby-bar-label svg { width: 13px; height: 13px; color: var(--metro); flex-shrink: 0; }
+    .nearby-bar-label strong { color: var(--text); }
+    .nearby-change-btn {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--metro);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    .nearby-change-btn:hover { text-decoration: underline; }
+
+    /* Route rows */
+    .route-list {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .route-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      text-decoration: none;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    .route-row:last-child { border-bottom: none; }
+    .route-row:hover { background: #F8FAFC; }
+    .route-row:active { background: #EFF4FB; }
+    .route-row-badge {
+      min-width: 46px;
+      padding: 4px 9px;
+      background: var(--metro);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.88rem;
+      border-radius: 7px;
+      text-align: center;
+      flex-shrink: 0;
+      letter-spacing: -0.01em;
+    }
+    .route-row-name {
+      flex: 1;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--muted);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .route-row-arrow { flex-shrink: 0; color: var(--subtle); }
+    .no-nearby {
+      padding: 1.25rem;
+      font-size: 0.84rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .view-all-link {
+      display: block;
+      text-align: center;
+      margin-top: 0.75rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--metro);
+      text-decoration: none;
+    }
+    .view-all-link:hover { text-decoration: underline; }
 
     /* ── SECTION HEAD ── */
     .section-head {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.7rem;
     }
     .section-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
     }
-    .browse-link {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--metro);
-      text-decoration: none;
-    }
-    .browse-link:hover { text-decoration: underline; }
 
     /* ── RECENTLY VIEWED ── */
-    #recent-section { display: none; margin-bottom: 2rem; }
-    .recent-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-    }
+    #recent-section { display: none; margin-bottom: 1.75rem; }
+    .recent-list { display: flex; flex-wrap: wrap; gap: 7px; }
     .recent-chip {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       padding: 5px 11px;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -202,23 +304,19 @@
     .recent-chip:hover { border-color: var(--metro); color: var(--metro); }
     .recent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-    /* ── NEARBY SECTION ── */
-    #nearby-section { display: none; margin-bottom: 2.25rem; }
-
-    /* ── ROUTE GRID ── */
+    /* ── BUS GRID (all routes) ── */
+    #all-routes { margin-bottom: 1.75rem; }
     .bus-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
-      gap: 8px;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+      gap: 7px;
     }
-
     .bus-card {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 5px;
-      padding: 12px 6px 10px;
+      padding: 11px 6px 9px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -228,99 +326,126 @@
       transition: box-shadow 0.15s, transform 0.12s, border-color 0.15s;
     }
     .bus-card:hover {
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.07);
       transform: translateY(-1px);
-      border-color: #C9D9F0;
+      border-color: #C5D6EE;
     }
-
     .bus-badge {
       background: var(--metro);
       color: #fff;
       font-weight: 800;
-      font-size: 0.88rem;
-      padding: 3px 8px;
+      font-size: 0.86rem;
+      padding: 3px 7px;
       border-radius: 7px;
-      min-width: 38px;
+      min-width: 36px;
       text-align: center;
       letter-spacing: -0.01em;
     }
-
     .bus-desc {
-      font-size: 0.6rem;
+      font-size: 0.58rem;
       color: var(--muted);
       text-align: center;
       line-height: 1.35;
-      max-width: 66px;
+      max-width: 64px;
     }
 
-    /* ── AGENCY CARD (BBB) ── */
-    .section-other { margin-bottom: 2rem; }
+    /* ── AGENCY CARD ── */
     .agency-card {
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 1rem 1.25rem;
+      padding: 1rem 1.1rem;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
     }
     .agency-badge {
       font-weight: 800;
-      font-size: 0.78rem;
-      padding: 6px 10px;
+      font-size: 0.75rem;
+      padding: 6px 9px;
       border-radius: 8px;
       flex-shrink: 0;
       color: #fff;
     }
     .agency-badge.bbb { background: #2A5FA5; }
-    .agency-info { font-size: 0.84rem; line-height: 1.5; }
-    .agency-info strong { font-size: 0.88rem; color: var(--text); }
+    .agency-info { font-size: 0.82rem; line-height: 1.5; }
+    .agency-info strong { font-size: 0.86rem; color: var(--text); }
     .agency-info p { color: var(--muted); margin-top: 2px; }
 
-    @media (max-width: 440px) {
+    @media (max-width: 420px) {
       .bus-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-      .bus-badge { font-size: 0.82rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- APP BAR -->
-<header class="app-bar">
-  <span class="wordmark">SoCal 511 <span>Transit</span></span>
-  <div class="live-pill">
-    <span class="live-dot"></span>
-    LIVE
+<!-- STICKY HEADER -->
+<div class="app-header">
+  <div class="app-bar">
+    <span class="wordmark">SoCal 511 <span>Transit</span></span>
+    <div class="live-pill">
+      <span class="live-dot"></span>
+      LIVE
+    </div>
   </div>
-</header>
-
-<!-- SEARCH HERO -->
-<div class="search-hero">
-  <form class="search-form" id="search-form" role="search">
-    <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-      <circle cx="8.5" cy="8.5" r="5.5"/>
-      <line x1="12.5" y1="12.5" x2="17" y2="17"/>
-    </svg>
-    <input class="search-input" id="search-input" type="search"
-      placeholder="Route number (720, 4, G…)" autocomplete="off"
-      aria-label="Search for a route" />
-    <button class="search-btn" type="submit">Track</button>
-  </form>
-
-  <div class="locate-row">
-    <button class="locate-btn" id="locate-btn" type="button" aria-label="Find routes near my location">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-        <circle cx="10" cy="8.5" r="3"/>
-        <path d="M10 2a6.5 6.5 0 0 1 6.5 6.5c0 4-6.5 9.5-6.5 9.5S3.5 12.5 3.5 8.5A6.5 6.5 0 0 1 10 2z"/>
+  <div class="search-wrap">
+    <form class="search-form" id="search-form" role="search">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.5" y1="12.5" x2="17" y2="17"/>
       </svg>
-      Routes near me
-    </button>
-    <div class="locate-spinner" id="locate-spinner" role="status" aria-label="Finding location"></div>
-    <span class="locate-area" id="locate-area"></span>
+      <input class="search-input" id="search-input" type="search"
+        placeholder="Route number (720, 4, G…)" autocomplete="off" aria-label="Search for a route" />
+      <button class="search-btn" type="submit">Track</button>
+    </form>
   </div>
 </div>
 
 <main>
+
+  <!-- LOCATION SECTION -->
+  <section id="loc-section">
+
+    <!-- Idle: prompt to share location -->
+    <div id="loc-idle">
+      <div class="loc-cta-card">
+        <div class="loc-cta-icon">📍</div>
+        <h2 class="loc-cta-title">Find routes near you</h2>
+        <p class="loc-cta-sub">See which Metro lines stop closest to your location</p>
+        <button class="loc-cta-btn" id="locate-btn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <circle cx="10" cy="8.5" r="3"/>
+            <path d="M10 2a6.5 6.5 0 0 1 6.5 6.5c0 4-6.5 9.5-6.5 9.5S3.5 12.5 3.5 8.5A6.5 6.5 0 0 1 10 2z"/>
+          </svg>
+          Use my location
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loc-loading" hidden>
+      <div class="loc-loading-row">
+        <div class="spinner-sm"></div>
+        Finding routes near you…
+      </div>
+    </div>
+
+    <!-- Active: nearby routes -->
+    <div id="loc-active" hidden>
+      <div class="nearby-bar">
+        <div class="nearby-bar-label">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <circle cx="10" cy="8.5" r="2.5"/>
+            <path fill-rule="evenodd" d="M10 2a6.5 6.5 0 0 0-6.5 6.5c0 4 6.5 9.5 6.5 9.5s6.5-5.5 6.5-9.5A6.5 6.5 0 0 0 10 2zm0 9a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" clip-rule="evenodd"/>
+          </svg>
+          Near <strong id="area-name">You</strong>
+        </div>
+        <button class="nearby-change-btn" id="loc-reset" aria-label="Change location">Change</button>
+      </div>
+      <div class="route-list" id="nearby-list"></div>
+      <a class="view-all-link" href="#all-routes">View all popular routes ↓</a>
+    </div>
+
+  </section>
 
   <!-- RECENTLY VIEWED -->
   <section id="recent-section" aria-label="Recently viewed routes">
@@ -330,25 +455,16 @@
     <div class="recent-list" id="recent-list"></div>
   </section>
 
-  <!-- NEARBY / POPULAR -->
-  <section id="nearby-section" aria-label="Routes near you">
+  <!-- ALL POPULAR ROUTES -->
+  <section id="all-routes" aria-label="All popular Metro bus routes">
     <div class="section-head">
-      <span class="section-label" id="nearby-label">Near You</span>
-      <a class="browse-link" href="#popular-section">Browse all</a>
-    </div>
-    <div class="bus-grid" id="nearby-grid"></div>
-  </section>
-
-  <!-- POPULAR ROUTES -->
-  <section id="popular-section" aria-label="Popular Metro bus routes">
-    <div class="section-head">
-      <span class="section-label" id="popular-label">Metro Bus — Popular Routes</span>
+      <span class="section-label" id="all-routes-label">Popular Routes</span>
     </div>
     <div class="bus-grid" id="bus-grid"></div>
   </section>
 
   <!-- OTHER AGENCIES -->
-  <section class="section-other" aria-label="Other agencies">
+  <section aria-label="Other agencies">
     <div class="section-head">
       <span class="section-label">Other Agencies</span>
     </div>
@@ -366,107 +482,140 @@
 <script type="module">
 import { METRO_BUS_FEATURED } from '/js/config.js';
 
-// ── RENDER FULL BUS GRID ──
+// ── ROUTE LOOKUP ──
+const routeMap = new Map(METRO_BUS_FEATURED.map(r => [r.code, r.desc]));
+
+// ── RENDER GRID ──
 function renderGrid(container, routes) {
   container.innerHTML = '';
   routes.forEach(route => {
     const a = document.createElement('a');
     a.className = 'bus-card';
     a.href = `/line/metro-${route.code}`;
-    a.innerHTML = `
-      <div class="bus-badge">${route.code}</div>
-      <span class="bus-desc">${route.desc}</span>
-    `;
+    a.innerHTML = `<div class="bus-badge">${route.code}</div><span class="bus-desc">${route.desc}</span>`;
     container.appendChild(a);
   });
 }
-
 renderGrid(document.getElementById('bus-grid'), METRO_BUS_FEATURED);
+
+// ── RENDER NEARBY LIST ──
+function renderNearbyList(routeCodes) {
+  const list = document.getElementById('nearby-list');
+  list.innerHTML = '';
+
+  // Prefer featured routes (have descriptions), then other codes, cap at 12
+  const featured = routeCodes.filter(c => routeMap.has(c));
+  const others   = routeCodes.filter(c => !routeMap.has(c));
+  const toShow   = [...featured, ...others].slice(0, 12);
+
+  if (!toShow.length) {
+    list.innerHTML = '<p class="no-nearby">No Metro routes found within walking distance.</p>';
+    return;
+  }
+
+  toShow.forEach(code => {
+    const desc = routeMap.get(code) || '';
+    const a = document.createElement('a');
+    a.className = 'route-row';
+    a.href = `/line/metro-${code}`;
+    a.innerHTML = `
+      <span class="route-row-badge">${code}</span>
+      ${desc ? `<span class="route-row-name">${desc}</span>` : ''}
+      <svg class="route-row-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    list.appendChild(a);
+  });
+}
+
+// ── LOCATION UI STATES ──
+const locIdle    = document.getElementById('loc-idle');
+const locLoading = document.getElementById('loc-loading');
+const locActive  = document.getElementById('loc-active');
+
+function showState(state) {
+  locIdle.hidden    = state !== 'idle';
+  locLoading.hidden = state !== 'loading';
+  locActive.hidden  = state !== 'active';
+  if (state === 'active') {
+    document.getElementById('all-routes-label').textContent = 'All Popular Routes';
+  } else {
+    document.getElementById('all-routes-label').textContent = 'Popular Routes';
+  }
+}
+
+// ── ACTIVATE WITH COORDS ──
+async function activateLocation(lat, lng, area) {
+  document.getElementById('area-name').textContent = area;
+
+  let routeCodes = METRO_BUS_FEATURED.map(r => r.code); // fallback
+  try {
+    const res = await fetch(`/api/nearby?lat=${lat}&lng=${lng}`);
+    const data = await res.json();
+    if (!data.fallback && data.routes?.length) {
+      routeCodes = data.routes;
+    }
+  } catch (_) { /* use fallback */ }
+
+  renderNearbyList(routeCodes);
+  showState('active');
+  localStorage.setItem('saved_location', JSON.stringify({ lat, lng, area }));
+}
+
+// ── GEOLOCATION FLOW ──
+async function doLocate() {
+  if (!navigator.geolocation) return;
+  showState('loading');
+
+  navigator.geolocation.getCurrentPosition(
+    async ({ coords: { latitude: lat, longitude: lng } }) => {
+      let area = 'Your Area';
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          { headers: { 'Accept-Language': 'en' } }
+        );
+        const d = await res.json();
+        const a = d.address || {};
+        area = a.neighbourhood || a.suburb || a.city_district
+             || a.town || a.city || 'Your Area';
+      } catch (_) { /* keep default */ }
+
+      await activateLocation(lat, lng, area);
+    },
+    () => showState('idle')
+  );
+}
+
+document.getElementById('locate-btn').addEventListener('click', doLocate);
+document.getElementById('loc-reset').addEventListener('click', () => {
+  localStorage.removeItem('saved_location');
+  showState('idle');
+});
+
+// Restore saved location on page load
+const saved = JSON.parse(localStorage.getItem('saved_location') || 'null');
+if (saved) {
+  showState('loading');
+  activateLocation(saved.lat, saved.lng, saved.area);
+}
 
 // ── RECENTLY VIEWED ──
 function loadRecent() {
   const recent = JSON.parse(localStorage.getItem('recent_lines') || '[]');
   if (!recent.length) return;
-  const section = document.getElementById('recent-section');
-  section.style.display = 'block';
+  document.getElementById('recent-section').style.display = 'block';
   const list = document.getElementById('recent-list');
   list.innerHTML = '';
   recent.slice(0, 8).forEach(item => {
     const a = document.createElement('a');
     a.className = 'recent-chip';
     a.href = `/line/${item.slug}`;
-    a.innerHTML = `
-      <span class="recent-dot" style="background:${item.color}"></span>
-      ${item.label}
-    `;
+    a.innerHTML = `<span class="recent-dot" style="background:${item.color}"></span>${item.label}`;
     list.appendChild(a);
   });
 }
 loadRecent();
-
-// ── LOCATION / NEARBY ──
-const locateBtn    = document.getElementById('locate-btn');
-const locateArea   = document.getElementById('locate-area');
-const locateSpinner = document.getElementById('locate-spinner');
-const nearbySection = document.getElementById('nearby-section');
-const nearbyLabel  = document.getElementById('nearby-label');
-const nearbyGrid   = document.getElementById('nearby-grid');
-const popularLabel = document.getElementById('popular-label');
-
-locateBtn.addEventListener('click', () => {
-  if (!navigator.geolocation) {
-    locateArea.textContent = 'Geolocation not supported.';
-    locateArea.style.display = 'inline';
-    return;
-  }
-
-  locateBtn.style.display = 'none';
-  locateSpinner.style.display = 'block';
-
-  navigator.geolocation.getCurrentPosition(
-    async pos => {
-      const { latitude: lat, longitude: lng } = pos.coords;
-
-      // Reverse geocode to get neighborhood name
-      let areaName = 'Your Area';
-      try {
-        const geo = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-          { headers: { 'Accept-Language': 'en' } }
-        );
-        const geoData = await geo.json();
-        const addr = geoData.address || {};
-        areaName = addr.neighbourhood || addr.suburb || addr.city_district
-                || addr.town || addr.city || 'Your Area';
-      } catch (_) { /* keep default */ }
-
-      locateSpinner.style.display = 'none';
-      locateArea.textContent = `📍 ${areaName}`;
-      locateArea.style.display = 'inline';
-
-      // Show nearby section with area name
-      nearbyLabel.textContent = `Near ${areaName}`;
-      // For now show all featured routes sorted by code;
-      // future: filter by proximity to stops via /api/nearby
-      renderGrid(nearbyGrid, METRO_BUS_FEATURED);
-      nearbySection.style.display = 'block';
-
-      // Retitle the full list
-      popularLabel.textContent = 'All Popular Routes';
-
-      // Smooth-scroll to nearby section
-      nearbySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    },
-    err => {
-      locateSpinner.style.display = 'none';
-      locateBtn.style.display = 'flex';
-      if (err.code === 1) {
-        locateArea.textContent = 'Location access denied.';
-        locateArea.style.display = 'inline';
-      }
-    }
-  );
-});
 
 // ── SEARCH ──
 document.getElementById('search-form').addEventListener('submit', e => {
