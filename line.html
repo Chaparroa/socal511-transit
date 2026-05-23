@@ -399,7 +399,8 @@
   const routeLayer   = L.featureGroup().addTo(map);
   const stopsLayer   = L.featureGroup().addTo(map);
   const vehicleLayer = L.featureGroup().addTo(map);
-  const vehicleMarkers = new Map();
+  const vehicleMarkers  = new Map();
+  const vehicleBearings = new Map(); // last-known non-zero bearing per vehicle
 
   // ── HELPERS ──
   function getDayType() {
@@ -542,16 +543,20 @@
     const pos    = data.vehicle?.position;
     if (dirId !== state.direction || !pos?.latitude || !pos?.longitude) {
       if (vehicleMarkers.has(vehicleId)) { vehicleMarkers.get(vehicleId).remove(); vehicleMarkers.delete(vehicleId); }
+      vehicleBearings.delete(vehicleId);
       return;
     }
     const { latitude: lat, longitude: lng, bearing } = pos;
+    // Persist last real bearing; fall back to it when feed briefly sends 0/null
+    if (bearing) vehicleBearings.set(vehicleId, bearing);
+    const effectiveBearing = bearing || vehicleBearings.get(vehicleId) || 0;
     const label    = data.vehicle?.vehicle?.label || vehicleId;
     const status   = data.vehicle?.currentStatus || '';
     const stopId   = data.vehicle?.stopId || '';
     const isMoving = status === 'IN_TRANSIT_TO';
     const nextStop = stopMap.get(String(stopId));
     const eta      = nextStop ? getETAText(pos, nextStop, status) : '';
-    const icon     = makeVehicleIcon(bearing);
+    const icon     = makeVehicleIcon(effectiveBearing);
 
     const popHtml = `
       <div class="pop" style="--pc:${_routeHex}">
