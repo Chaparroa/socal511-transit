@@ -23,12 +23,15 @@ const CANDIDATE_ROUTES = [
 ];
 
 async function fetchRouteInfo(code) {
+  const fallback = { code, name: '', color: '#0072CE' };
   try {
     const r = await fetch(`https://api.metro.net/LACMTA/route_overview/${code}`, {
       signal: AbortSignal.timeout(4000),
     });
-    if (!r.ok) return null;
+    if (!r.ok) return fallback;
     const data = await r.json();
+    // Empty array means Metro confirms this route has no active data — exclude it.
+    // Any other failure (timeout, network error) keeps the route with default styling.
     const route = Array.isArray(data) && data.length ? data[0] : null;
     if (!route) return null;
     return {
@@ -37,7 +40,7 @@ async function fetchRouteInfo(code) {
       color: route.route_color ? `#${route.route_color.replace(/^#/, '')}` : '#0072CE',
     };
   } catch {
-    return null;
+    return fallback;
   }
 }
 
