@@ -123,6 +123,21 @@
       box-shadow: 0 4px 16px rgba(0,0,0,0.1);
       transform: translateY(-2px);
     }
+    .line-card.unavailable {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .line-card.unavailable .line-badge {
+      filter: grayscale(0.4);
+    }
+    .line-card-soon {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
 
     .line-badge {
       width: 40px;
@@ -302,11 +317,13 @@ import { METRO_RAIL, METRO_BUS_FEATURED } from '/js/config.js';
 const railGrid = document.getElementById('rail-grid');
 METRO_RAIL.forEach(line => {
   const a = document.createElement('a');
-  a.className = 'line-card';
-  a.href = `/line/metro-${line.code}`;
+  a.className = `line-card${line.available ? '' : ' unavailable'}`;
+  if (line.available) a.href = `/line/metro-${line.code}`;
+  a.title = line.available ? line.desc : `${line.label} — coming soon (requires API upgrade)`;
   a.innerHTML = `
     <div class="line-badge" style="background:${line.color}">${line.code}</div>
     <span class="line-card-label">${line.label}</span>
+    ${line.available ? '' : '<span class="line-card-soon">Soon</span>'}
   `;
   railGrid.appendChild(a);
 });

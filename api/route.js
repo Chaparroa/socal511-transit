@@ -1,5 +1,15 @@
 // Proxies Metro REST calls server-side to bypass browser CORS restrictions.
 // Returns combined route metadata + stops in a single request.
+
+// G and J are BRT busways — Metro API uses numeric codes, not letter names
+const ROUTE_ALIAS = {
+  'G': '901',
+  'J': '910',
+};
+
+// Heavy rail lines are not available in this API (requires Swiftly partnership key)
+const UNAVAILABLE_RAIL = new Set(['A', 'B', 'C', 'D', 'E', 'K']);
+
 export default async function handler(req, res) {
   const { route, agency } = req.query;
 
@@ -12,12 +22,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Agency '${agency}' not yet supported` });
   }
 
-  const base = 'https://api.metro.net/LACMTA';
+  const upper = route.toUpperCase();
+
+  if (UNAVAILABLE_RAIL.has(upper)) {
+    return res.status(503).json({
+      error: `Metro ${upper} Line real-time data is not yet available. Heavy rail (A, B, C, D, E, K lines) requires an API upgrade — coming soon.`,
+      unavailable: true,
+    });
+  }
+
+  const apiCode = ROUTE_ALIAS[upper] || route;
+  const base    = 'https://api.metro.net/LACMTA';
 
   try {
     const [overviewRes, stopsRes] = await Promise.all([
-      fetch(`${base}/route_overview/${route}`),
-      fetch(`${base}/route_stops/${route}`),
+      fetch(`${base}/route_overview/${apiCode}`),
+      fetch(`${base}/route_stops/${apiCode}`),
     ]);
 
     if (!overviewRes.ok) throw new Error(`route_overview HTTP ${overviewRes.status}`);

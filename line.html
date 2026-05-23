@@ -331,11 +331,15 @@
   import { AGENCIES } from '/js/config.js';
 
   // ── PARSE ROUTE FROM URL ──
-  // URL pattern: /line/{agency}-{routeCode}  e.g. /line/metro-207  /line/metro-B
-  const slug   = location.pathname.split('/line/')[1] || '';
+  // URL pattern: /line/{agency}-{routeCode}  e.g. /line/metro-207  /line/metro-G
+  const slug    = location.pathname.split('/line/')[1] || '';
   const dashIdx = slug.indexOf('-');
   const agencyId   = dashIdx > -1 ? slug.slice(0, dashIdx).toLowerCase() : 'metro';
   const routeCode  = dashIdx > -1 ? slug.slice(dashIdx + 1).toUpperCase() : slug.toUpperCase();
+
+  // G and J are BRT busways — WebSocket uses numeric codes
+  const WS_ALIAS = { 'G': '901', 'J': '910' };
+  const wsRouteCode = WS_ALIAS[routeCode] || routeCode;
 
   const agencyConfig = AGENCIES[agencyId] || AGENCIES.metro;
 
@@ -625,7 +629,7 @@
 
   function connectWS() {
     if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
-    const url = `${agencyConfig.wsBase}/${routeCode}`;
+    const url = `${agencyConfig.wsBase}/${wsRouteCode}`;
 
     ws = new WebSocket(url);
 
@@ -723,6 +727,7 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { route, stops } = await res.json();
 
+      if (json.unavailable) throw Object.assign(new Error(json.error), { unavailable: true });
       if (!route) throw new Error(`Route ${routeCode} not found`);
 
       state.routeInfo = route;
@@ -753,7 +758,11 @@
 
     } catch (err) {
       document.getElementById('loading').classList.add('hidden');
-      showError(`Could not load route ${routeCode}: ${err.message}`);
+      if (err.unavailable) {
+        showError(`Metro ${routeCode} Line — ${err.message}`);
+      } else {
+        showError(`Could not load route ${routeCode}: ${err.message}`);
+      }
     }
   }
 
