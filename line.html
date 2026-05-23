@@ -725,9 +725,9 @@
     try {
       const res = await fetch(`/api/route?route=${routeCode}&agency=${agencyId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const { route, stops } = await res.json();
-
+      const json = await res.json();
       if (json.unavailable) throw Object.assign(new Error(json.error), { unavailable: true });
+      const { route, stops } = json;
       if (!route) throw new Error(`Route ${routeCode} not found`);
 
       state.routeInfo = route;
