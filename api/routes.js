@@ -2,15 +2,6 @@
 // Validates each candidate against route_overview — routes returning empty data are excluded.
 // Result is cached 24h at the CDN edge (stale-while-revalidate 7d), so cold hits are rare.
 
-const RAIL_CODES = new Set(['801','802','803','804','805','806','807','808','901','910']);
-
-function isBus(code) {
-  if (!code) return false;
-  if (RAIL_CODES.has(String(code))) return false;
-  if (/^[A-K]$/.test(String(code))) return false;
-  return true;
-}
-
 // Candidate routes — validated against Metro's API as of 2026-05-23.
 // Dead routes are pruned at runtime; add new routes here when Metro activates them.
 const CANDIDATE_ROUTES = [

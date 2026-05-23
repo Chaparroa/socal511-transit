@@ -731,7 +731,7 @@ allBtn.addEventListener('click', async () => {
 // ── SEARCH ──
 document.getElementById('search-form').addEventListener('submit', e => {
   e.preventDefault();
-  const val = document.getElementById('search-input').value.trim().toUpperCase();
+  const val = document.getElementById('search-input').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (!val) return;
   window.location.href = `/line/metro-${val}`;
 });

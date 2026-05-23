@@ -36,8 +36,8 @@ export default async function handler(req, res) {
 
   try {
     const [overviewRes, stopsRes] = await Promise.all([
-      fetch(`${base}/route_overview/${apiCode}`),
-      fetch(`${base}/route_stops/${apiCode}`),
+      fetch(`${base}/route_overview/${apiCode}`, { signal: AbortSignal.timeout(8000) }),
+      fetch(`${base}/route_stops/${apiCode}`,    { signal: AbortSignal.timeout(8000) }),
     ]);
 
     if (!overviewRes.ok) throw new Error(`route_overview HTTP ${overviewRes.status}`);
