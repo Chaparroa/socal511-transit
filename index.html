@@ -305,7 +305,7 @@
       letter-spacing: -0.01em;
     }
     .bus-desc {
-      font-size: 0.58rem;
+      font-size: 0.72rem;
       color: var(--muted);
       text-align: center;
       line-height: 1.35;
@@ -422,6 +422,66 @@
     @media (max-width: 420px) {
       .bus-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
     }
+
+    /* ── ROUTE GROUPS ── */
+    .routes-group-header {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 1rem 0 0.45rem;
+    }
+    .routes-group-header:first-child { padding-top: 0.1rem; }
+
+    /* ── SEARCH SUGGESTIONS ── */
+    .bar-inner { position: relative; }
+
+    #search-suggestions {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      max-height: 55vh;
+      overflow-y: auto;
+    }
+    .search-suggestion {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      text-decoration: none;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    .search-suggestion:last-child { border-bottom: none; }
+    .search-suggestion:hover,
+    .search-suggestion:focus { background: #F8FAFC; outline: none; }
+    .suggestion-badge {
+      min-width: 38px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.82rem;
+      text-align: center;
+      flex-shrink: 0;
+      letter-spacing: -0.01em;
+    }
+    .suggestion-name {
+      flex: 1;
+      font-size: 0.85rem;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -504,6 +564,7 @@
 <!-- STICKY BOTTOM BAR -->
 <div id="bottom-bar">
   <div class="bar-inner">
+    <div id="search-suggestions" hidden></div>
     <form class="search-form" id="search-form" role="search">
       <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
         <circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.5" y1="12.5" x2="17" y2="17"/>
@@ -532,8 +593,19 @@ const ARROW_SVG = `<svg class="route-row-arrow" width="16" height="16" viewBox="
   <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
+// ── SHARED ROUTE DATA — fetched once, used by nearby list, search, and view-all ──
+const routeInfoMap = new Map(); // code → { name, color }
+let allRoutesData  = [];
+
+const routesReady = fetch('/api/routes')
+  .then(r => r.json())
+  .then(({ routes = [] }) => {
+    allRoutesData = routes;
+    routes.forEach(r => routeInfoMap.set(r.code, { name: r.name, color: r.color }));
+  })
+  .catch(() => {});
+
 // ── RENDER NEARBY LIST ──
-// routes: [{code, distanceM}] sorted by distance
 function renderNearbyList(routes) {
   const list = document.getElementById('nearby-list');
   list.innerHTML = '';
@@ -544,6 +616,9 @@ function renderNearbyList(routes) {
   }
 
   routes.forEach(({ code, distanceM }) => {
+    const info  = routeInfoMap.get(code) || {};
+    const color = info.color || 'var(--metro)';
+    const name  = info.name  || `Metro ${code}`;
     const a = document.createElement('a');
     a.className = 'route-row';
     a.href = `/line/metro-${code}`;
@@ -551,8 +626,8 @@ function renderNearbyList(routes) {
       ? `<span class="route-row-dist">${fmtDist(distanceM)}</span>`
       : '';
     a.innerHTML = `
-      <span class="route-row-badge">${code}</span>
-      <span class="route-row-name">Metro ${code}</span>
+      <span class="route-row-badge" style="background:${color}">${code}</span>
+      <span class="route-row-name">${name}</span>
       ${distHtml}
       ${ARROW_SVG}`;
     list.appendChild(a);
@@ -582,6 +657,7 @@ async function activateLocation(lat, lng, area) {
     if (!data.fallback) routes = data.routes || [];
   } catch (_) {}
 
+  await routesReady; // ensure names are loaded before rendering
   renderNearbyList(routes);
   showState('active');
   localStorage.setItem('saved_location', JSON.stringify({ lat, lng, area }));
@@ -675,9 +751,16 @@ function syncPadding() {
 syncPadding();
 window.addEventListener('resize', syncPadding);
 
-// ── VIEW ALL ROUTES ──
-let allRoutesLoaded = false;
+// ── VIEW ALL ROUTES — grouped by route range ──
+const ROUTE_GROUPS = [
+  { label: 'Local',     filter: c => +c < 100 },
+  { label: 'Connector', filter: c => +c >= 100 && +c < 300 },
+  { label: 'Express',   filter: c => +c >= 300 && +c < 700 },
+  { label: 'Rapid',     filter: c => +c >= 700 },
+];
+
 let allRoutesOpen   = false;
+let allRoutesLoaded = false;
 
 const allBtn  = document.getElementById('all-routes-btn');
 const allList = document.getElementById('all-routes-list');
@@ -690,48 +773,91 @@ allBtn.addEventListener('click', async () => {
     ? 'Hide Metro bus lines'
     : 'View all Metro bus lines';
 
-  if (!allRoutesOpen) {
-    allList.hidden = true;
-    return;
-  }
-
+  if (!allRoutesOpen) { allList.hidden = true; return; }
   allList.hidden = false;
-
   if (allRoutesLoaded) return;
 
   allList.innerHTML = `<div class="routes-loading"><div class="spinner-sm"></div> Loading all routes…</div>`;
 
   try {
-    const res  = await fetch('/api/routes');
-    const data = await res.json();
-    const routes = data.routes || [];
+    await routesReady;
+    if (!allRoutesData.length) throw new Error('No routes returned');
 
-    if (!routes.length) throw new Error('No routes returned');
+    const container = document.createElement('div');
 
-    const grid = document.createElement('div');
-    grid.className = 'bus-grid';
-    routes.forEach(r => {
-      const a = document.createElement('a');
-      a.className = 'bus-card';
-      a.href = `/line/metro-${r.code}`;
-      a.innerHTML = `
-        <div class="bus-badge" style="background:${r.color || 'var(--metro)'}">${r.code}</div>
-        <span class="bus-desc">${r.name || ''}</span>`;
-      grid.appendChild(a);
+    ROUTE_GROUPS.forEach(group => {
+      const groupRoutes = allRoutesData.filter(r => group.filter(r.code));
+      if (!groupRoutes.length) return;
+
+      const header = document.createElement('div');
+      header.className = 'routes-group-header';
+      header.textContent = group.label;
+      container.appendChild(header);
+
+      const grid = document.createElement('div');
+      grid.className = 'bus-grid';
+      groupRoutes.forEach(r => {
+        const a = document.createElement('a');
+        a.className = 'bus-card';
+        a.href = `/line/metro-${r.code}`;
+        a.innerHTML = `
+          <div class="bus-badge" style="background:${r.color || 'var(--metro)'}">${r.code}</div>
+          <span class="bus-desc">${r.name || ''}</span>`;
+        grid.appendChild(a);
+      });
+      container.appendChild(grid);
     });
 
     allList.innerHTML = '';
-    allList.appendChild(grid);
+    allList.appendChild(container);
     allRoutesLoaded = true;
   } catch (err) {
     allList.innerHTML = `<p class="no-nearby">Could not load routes — ${err.message}</p>`;
   }
 });
 
-// ── SEARCH ──
+// ── SEARCH AUTOCOMPLETE ──
+const searchInput      = document.getElementById('search-input');
+const suggestionsEl    = document.getElementById('search-suggestions');
+
+function renderSuggestions(query) {
+  const q = query.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!q || !allRoutesData.length) { suggestionsEl.hidden = true; return; }
+
+  const matches = allRoutesData.filter(r =>
+    r.code.startsWith(q) ||
+    (r.name && r.name.toUpperCase().includes(q))
+  ).slice(0, 6);
+
+  if (!matches.length) { suggestionsEl.hidden = true; return; }
+
+  suggestionsEl.innerHTML = '';
+  matches.forEach(r => {
+    const a = document.createElement('a');
+    a.className = 'search-suggestion';
+    a.href = `/line/metro-${r.code}`;
+    a.innerHTML = `
+      <span class="suggestion-badge" style="background:${r.color || 'var(--metro)'}">${r.code}</span>
+      <span class="suggestion-name">${r.name || `Metro ${r.code}`}</span>`;
+    suggestionsEl.appendChild(a);
+  });
+  suggestionsEl.hidden = false;
+}
+
+searchInput.addEventListener('input', () => renderSuggestions(searchInput.value));
+searchInput.addEventListener('focus', () => renderSuggestions(searchInput.value));
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#bottom-bar')) suggestionsEl.hidden = true;
+});
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { suggestionsEl.hidden = true; searchInput.blur(); }
+});
+
+// ── SEARCH SUBMIT ──
 document.getElementById('search-form').addEventListener('submit', e => {
   e.preventDefault();
-  const val = document.getElementById('search-input').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const val = searchInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (!val) return;
   window.location.href = `/line/metro-${val}`;
 });

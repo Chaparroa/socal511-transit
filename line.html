@@ -51,7 +51,7 @@
       border-radius: 50%;
       background: rgba(255,255,255,0.2);
       border: none;
-      color: #fff;
+      color: var(--route-text);
       font-size: 1rem;
       display: flex; align-items: center; justify-content: center;
       text-decoration: none;
@@ -88,7 +88,7 @@
 
     #route-number {
       background: rgba(255,255,255,0.22);
-      color: #fff;
+      color: var(--route-text);
       font-weight: 900;
       font-size: 1.1rem;
       padding: 3px 11px;
@@ -107,7 +107,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 160px;
-      color: #fff;
+      color: var(--route-text);
     }
 
     #direction-section {
@@ -131,7 +131,7 @@
     #direction-toggle {
       background: rgba(255,255,255,0.18);
       border: 1.5px solid rgba(255,255,255,0.45);
-      color: #fff;
+      color: var(--route-text);
       padding: 5px 13px;
       border-radius: 20px;
       cursor: pointer;
@@ -342,6 +342,34 @@
     .leaflet-popup-content { margin: 14px 16px; }
     .leaflet-popup-tip-container { margin-top: -1px; }
 
+    /* ── NO VEHICLES NOTICE ── */
+    #no-vehicles-card {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 14px 22px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      text-align: center;
+      width: max-content;
+      max-width: calc(100vw - 40px);
+      pointer-events: none;
+    }
+    .no-v-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 3px;
+    }
+    .no-v-sub {
+      font-size: 0.78rem;
+      color: #64748B;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 480px) {
       #route-name { display: none; }
@@ -355,7 +383,11 @@
 
   <header id="header">
     <div id="header-top">
-      <a href="/" id="back-btn" aria-label="Back">←</a>
+      <a href="/" id="back-btn" aria-label="Back to home">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M11 4.5L6.5 9l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
       <div id="route-pill">
         <span id="route-number">…</span>
         <span id="route-name">Loading…</span>
@@ -383,6 +415,11 @@
   <div id="loading" aria-live="polite">
     <div class="spinner"></div>
     <div id="loading-text">Loading route…</div>
+  </div>
+
+  <div id="no-vehicles-card">
+    <div class="no-v-title">No active buses</div>
+    <div class="no-v-sub">Try switching direction ⇅</div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -421,6 +458,17 @@
   const routeLayer   = L.featureGroup().addTo(map);
   const stopsLayer   = L.featureGroup().addTo(map);
   const vehicleLayer = L.featureGroup().addTo(map);
+
+  // Hide stop dots at city-level zoom — they clutter the map below zoom 13
+  const MIN_STOP_ZOOM = 13;
+  function updateStopVisibility() {
+    if (map.getZoom() >= MIN_STOP_ZOOM) {
+      if (!map.hasLayer(stopsLayer)) stopsLayer.addTo(map);
+    } else {
+      if (map.hasLayer(stopsLayer)) map.removeLayer(stopsLayer);
+    }
+  }
+  map.on('zoomend', updateStopVisibility);
   const vehicleMarkers  = new Map();
   const vehicleBearings = new Map(); // last-known non-zero bearing per vehicle
 
@@ -557,6 +605,7 @@
         }, { maxWidth: 230 })
         .addTo(stopsLayer);
     });
+    updateStopVisibility();
   }
 
   // ── VEHICLE UPDATE ──
@@ -621,22 +670,35 @@
     updateVehicleCount();
   }
 
+  function updateNoVehiclesState() {
+    const card = document.getElementById('no-vehicles-card');
+    card.style.display = (state.lastUpdatedTime && vehicleMarkers.size === 0) ? 'block' : 'none';
+  }
+
   function updateVehicleCount() {
     const el = document.getElementById('vehicle-count');
     const n  = vehicleMarkers.size;
-    if (n === 0) { el.style.display = 'none'; return; }
-    el.style.display = 'block';
-    el.textContent   = `${n} active`;
+    if (n === 0) { el.style.display = 'none'; }
+    else { el.style.display = 'block'; el.textContent = `${n} bus${n === 1 ? '' : 'es'} active`; }
+    updateNoVehiclesState();
   }
 
   // ── STATUS BAR ──
+  function formatAgo(ms) {
+    const s = Math.floor(ms / 1000);
+    if (s < 30) return 'just now';
+    if (s < 90) return '1 min ago';
+    const m = Math.floor(s / 60);
+    return m < 60 ? `${m} min ago` : `${Math.floor(m / 60)}h ago`;
+  }
+
   function updateStatus() {
     const el = document.getElementById('last-updated');
     if (!state.lastUpdatedTime) { el.textContent = 'Waiting for live positions…'; el.className = ''; return; }
-    const ago = Date.now() - state.lastUpdatedTime.getTime();
-    const t   = state.lastUpdatedTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
-    el.textContent = ago > 120000 ? `⚠ Data may be stale — last at ${t}` : `Updated ${t}`;
-    el.className   = ago > 120000 ? 'stale' : '';
+    const ago   = Date.now() - state.lastUpdatedTime.getTime();
+    const stale = ago > 120000;
+    el.textContent = stale ? `⚠ Last updated ${formatAgo(ago)}` : `Updated ${formatAgo(ago)}`;
+    el.className   = stale ? 'stale' : '';
   }
 
   function updateDirectionUI() {
@@ -647,7 +709,7 @@
     const dest     = (dir === 0 ? t2 : t1) || '';
     const otherDir = (dir === 0 ? d1 : d0) || (dir === 0 ? 'Inbound' : 'Outbound');
     document.getElementById('direction-label').textContent  = dest ? `${dirLabel} to ${dest}` : dirLabel;
-    document.getElementById('direction-toggle').textContent = `⇅ ${otherDir}`;
+    document.getElementById('direction-toggle').textContent = `⇅ to ${otherDir}`;
   }
 
   // ── FAVORITES ──
@@ -779,6 +841,8 @@
       document.getElementById('direction-toggle').disabled = false;
 
       applyRouteColor(color);
+      const textColor = route.route_text_color ? `#${route.route_text_color}` : '#ffffff';
+      document.documentElement.style.setProperty('--route-text', textColor);
       updateDirectionUI();
       renderRoute();
       renderStops();
