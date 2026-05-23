@@ -10,7 +10,9 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   sync:
@@ -20,10 +22,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node 20
+      - name: Set up Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Fetch active Metro routes
         run: node api/scripts/fetch-routes.js --write
@@ -39,21 +41,11 @@ jobs:
             git diff api/routes.js
           fi
 
-      - name: Open pull request
+      - name: Commit and push
         if: steps.diff.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: auto/sync-metro-routes
-          commit-message: 'chore: sync Metro bus routes and stop index'
-          title: 'chore: sync Metro bus routes and stop index'
-          body: |
-            Automated monthly sync of active Metro bus routes and stop coordinates from the Metro API.
-
-            **Before merging, check:**
-            - [ ] Added routes look intentional (new Metro service, not a transient API glitch)
-            - [ ] Removed routes are truly discontinued (not a temporary API outage — if unsure, re-run the workflow a day later to confirm)
-            - [ ] `short` names (arterials) read cleanly on the cards and header
-
-            Merging this PR deploys immediately to production via Vercel.
-          labels: automated,routes
-          draft: false
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add api/routes.js api/nearby.js api/stop-index.json
+          git commit -m "chore: sync Metro bus routes and stop index"
+          git push
