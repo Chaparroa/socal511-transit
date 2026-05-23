@@ -106,7 +106,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
+      max-width: 240px;
       color: var(--route-text);
     }
 
@@ -833,12 +833,14 @@
       buildStopMap();
 
       const fullName  = route.description || route.route_long_name || route.route_desc || 'Metro Line';
-      const shortName = route.arterials || fullName;
+      const t1 = route.terminal_1 || '';
+      const t2 = route.terminal_2 || '';
+      const routeLabel = t1 && t2 ? `${t1} → ${t2}` : (route.arterials || fullName);
       const color     = route.route_color ? `#${route.route_color}` : agencyCfg.color;
 
       document.title = `Route ${routeCode} · ${fullName} · SoCal 511 Transit`;
       document.getElementById('route-number').textContent = routeCode;
-      document.getElementById('route-name').textContent   = shortName;
+      document.getElementById('route-name').textContent   = routeLabel;
       document.getElementById('direction-toggle').disabled = false;
 
       applyRouteColor(color);
