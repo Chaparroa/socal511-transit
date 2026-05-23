@@ -9,8 +9,8 @@
 // then paste the output ROUTES array here.
 //
 // Validated against Metro's API 2026-05-23. All bus routes share color #E16710.
-// Fields: code, short (arterials — compact street name for UI labels),
-//         name (full description for page titles and tooltips).
+// Fields: code, short (arterials), t1/t2 (terminal stop names for endpoint display),
+//         name (full description for page titles and search).
 
 const ROUTES = [
   { code:'2',   short:'Sunset Bl',                                              name:'USC - Westwood via Sunset Bl' },

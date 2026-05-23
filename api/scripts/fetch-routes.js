@@ -43,7 +43,9 @@ async function probe(code) {
     const name  = (d.description || d.route_long_name || '').trim();
     if (!name) return null;
     const short = (d.arterials || '').trim() || name;
-    return { code, short, name };
+    const t1    = (d.terminal_1 || '').trim();
+    const t2    = (d.terminal_2 || '').trim();
+    return { code, short, t1, t2, name };
   } catch {
     return null;
   }
@@ -147,7 +149,7 @@ async function main() {
   const routeLines = found.map(r => {
     const codeStr  = `'${r.code}',`.padEnd(codeW);
     const shortStr = `'${r.short}',`.padEnd(shortW);
-    return `  { code:${codeStr} short:${shortStr} name:'${r.name}' },`;
+    return `  { code:${codeStr} short:${shortStr} t1:'${r.t1}', t2:'${r.t2}', name:'${r.name}' },`;
   });
 
   const newRoutesArray = `const ROUTES = [\n${routeLines.join('\n')}\n];`;

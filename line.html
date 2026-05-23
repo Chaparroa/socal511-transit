@@ -707,9 +707,13 @@
     const dir      = state.direction;
     const dirLabel = (dir === 0 ? d0 : d1) || (dir === 0 ? 'Outbound' : 'Inbound');
     const dest     = (dir === 0 ? t2 : t1) || '';
+    const origin   = (dir === 0 ? t1 : t2) || '';
     const otherDir = (dir === 0 ? d1 : d0) || (dir === 0 ? 'Inbound' : 'Outbound');
     document.getElementById('direction-label').textContent  = dest ? `${dirLabel} to ${dest}` : dirLabel;
     document.getElementById('direction-toggle').textContent = `⇅ to ${otherDir}`;
+    if (origin && dest) {
+      document.getElementById('route-name').textContent = `${origin} → ${dest}`;
+    }
   }
 
   // ── FAVORITES ──
@@ -833,14 +837,11 @@
       buildStopMap();
 
       const fullName  = route.description || route.route_long_name || route.route_desc || 'Metro Line';
-      const t1 = route.terminal_1 || '';
-      const t2 = route.terminal_2 || '';
-      const routeLabel = t1 && t2 ? `${t1} → ${t2}` : (route.arterials || fullName);
       const color     = route.route_color ? `#${route.route_color}` : agencyCfg.color;
 
       document.title = `Route ${routeCode} · ${fullName} · SoCal 511 Transit`;
       document.getElementById('route-number').textContent = routeCode;
-      document.getElementById('route-name').textContent   = routeLabel;
+      document.getElementById('route-name').textContent   = route.arterials || fullName;
       document.getElementById('direction-toggle').disabled = false;
 
       applyRouteColor(color);

@@ -605,17 +605,6 @@ function fmtDist(meters) {
   return `${(meters / 1609.344).toFixed(1)} mi`;
 }
 
-// ── ROUTE TITLE PARSING ──
-// Converts "Downtown LA - Willowbrook via Compton Av" → { title: "Downtown LA → Willowbrook", via: "Compton Av" }
-function parseRouteTitle(name, short) {
-  const viaIdx = name.indexOf(' via ');
-  const endpointsStr = viaIdx > -1 ? name.slice(0, viaIdx) : name;
-  const via = viaIdx > -1 ? name.slice(viaIdx + 5) : short;
-  const parts = endpointsStr.split(' - ');
-  const title = parts.length >= 2 ? `${parts[0]} → ${parts[parts.length - 1]}` : endpointsStr;
-  return { title, via };
-}
-
 // ── ARROW SVG ──
 const ARROW_SVG = `<svg class="route-row-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
   <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -629,7 +618,7 @@ const routesReady = fetch('/api/routes')
   .then(r => r.json())
   .then(({ routes = [] }) => {
     allRoutesData = routes;
-    routes.forEach(r => routeInfoMap.set(r.code, { name: r.name, short: r.short, color: r.color }));
+    routes.forEach(r => routeInfoMap.set(r.code, { name: r.name, short: r.short, color: r.color, t1: r.t1, t2: r.t2 }));
   })
   .catch(() => {});
 
@@ -646,18 +635,19 @@ function renderNearbyList(routes) {
   routes.forEach(({ code, distanceM }) => {
     const info  = routeInfoMap.get(code) || {};
     const color = info.color || 'var(--metro)';
-    const { title, via } = parseRouteTitle(info.name || '', info.short || '');
+    const { t1, t2 } = info;
+    const title = t1 && t2 ? `${t1} → ${t2}` : (info.short || `Metro ${code}`);
+    const viaHtml = t1 && t2 && info.short ? `<div class="route-row-via">via ${info.short}</div>` : '';
     const a = document.createElement('a');
     a.className = 'route-row';
     a.href = `/line/metro-${code}`;
     const distHtml = distanceM != null
       ? `<span class="route-row-dist">${fmtDist(distanceM)}</span>`
       : '';
-    const viaHtml = via ? `<div class="route-row-via">via ${via}</div>` : '';
     a.innerHTML = `
       <span class="route-row-badge" style="background:${color}">${code}</span>
       <span class="route-row-name">
-        <div class="route-row-main">${title || `Metro ${code}`}</div>
+        <div class="route-row-main">${title}</div>
         ${viaHtml}
       </span>
       ${distHtml}
@@ -832,10 +822,10 @@ allBtn.addEventListener('click', async () => {
         const a = document.createElement('a');
         a.className = 'bus-card';
         a.href = `/line/metro-${r.code}`;
-        const { title: cardTitle } = parseRouteTitle(r.name || '', r.short || '');
+        const cardTitle = r.t1 && r.t2 ? `${r.t1} → ${r.t2}` : (r.short || r.name || '');
         a.innerHTML = `
           <div class="bus-badge" style="background:${r.color || 'var(--metro)'}">${r.code}</div>
-          <span class="bus-desc">${cardTitle || r.short || r.name || ''}</span>`;
+          <span class="bus-desc">${cardTitle}</span>`;
         grid.appendChild(a);
       });
       container.appendChild(grid);
