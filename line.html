@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <!-- Title and meta set dynamically once route data loads -->
   <title>Loading… · SoCal 511 Transit</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <style>
@@ -11,30 +10,34 @@
 
     :root {
       --route-color: #0072CE;
-      --bg:    #1A2535;
-      --text:  #FFFFFF;
-      --muted: rgba(255,255,255,0.6);
+      --route-text:  #ffffff;
+      --bg:          #0F172A;
+      --surface:     rgba(255,255,255,0.96);
+      --border:      rgba(0,0,0,0.08);
     }
 
     html, body {
       height: 100dvh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
       background: var(--bg);
     }
 
-    /* ── HEADER ── */
+    /* ── MAP — full screen ── */
+    #map {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    /* ── HEADER — floating overlay ── */
     #header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 12px 14px 10px;
       background: var(--route-color);
-      padding: 10px 14px 8px;
-      flex-shrink: 0;
-      z-index: 500;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.25);
     }
 
     #header-top {
@@ -44,24 +47,22 @@
     }
 
     #back-btn {
-      background: rgba(255,255,255,0.18);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
       border: none;
       color: #fff;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
       font-size: 1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
       text-decoration: none;
+      flex-shrink: 0;
+      cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
     }
-    #back-btn:hover { background: rgba(255,255,255,0.28); }
+    #back-btn:hover { background: rgba(255,255,255,0.32); }
 
-    #route-badge {
+    #route-pill {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -69,26 +70,27 @@
     }
 
     #route-number {
-      background: #fff;
-      color: var(--route-color);
+      background: rgba(255,255,255,0.22);
+      color: #fff;
       font-weight: 900;
-      font-size: 1.15rem;
-      padding: 2px 10px;
-      border-radius: 6px;
-      letter-spacing: 0.3px;
-      line-height: 1.6;
+      font-size: 1.1rem;
+      padding: 3px 11px;
+      border-radius: 8px;
+      letter-spacing: 0.02em;
+      line-height: 1.5;
       min-width: 44px;
       text-align: center;
     }
 
     #route-name {
-      font-size: 0.72rem;
-      font-weight: 500;
-      opacity: 0.85;
+      font-size: 0.8rem;
+      font-weight: 600;
+      opacity: 0.88;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
+      max-width: 160px;
+      color: #fff;
     }
 
     #direction-section {
@@ -101,207 +103,243 @@
     }
 
     #direction-label {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 600;
+      color: rgba(255,255,255,0.88);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: rgba(255,255,255,0.9);
     }
 
     #direction-toggle {
       background: rgba(255,255,255,0.18);
-      border: 1.5px solid rgba(255,255,255,0.5);
+      border: 1.5px solid rgba(255,255,255,0.45);
       color: #fff;
-      padding: 5px 12px;
+      padding: 5px 13px;
       border-radius: 20px;
       cursor: pointer;
       font-size: 0.78rem;
-      font-weight: 600;
+      font-weight: 700;
       white-space: nowrap;
       flex-shrink: 0;
       transition: background 0.15s;
       -webkit-tap-highlight-color: transparent;
-      min-height: 30px;
+      min-height: 32px;
     }
     #direction-toggle:hover,
     #direction-toggle:active { background: rgba(255,255,255,0.3); }
-    #direction-toggle:disabled { opacity: 0.45; cursor: default; }
+    #direction-toggle:disabled { opacity: 0.4; cursor: default; }
 
     #status-bar {
       margin-top: 5px;
       font-size: 0.68rem;
-      color: var(--muted);
+      color: rgba(255,255,255,0.65);
       min-height: 1em;
     }
+    #last-updated.stale { color: #FFE57A; font-weight: 600; opacity: 1; }
 
-    #last-updated.stale { color: #FFE066; font-weight: 600; opacity: 1; }
-
-    /* ── MAP ── */
-    #map {
-      flex: 1;
-      min-height: 0;
-      z-index: 1;
-    }
-
-    /* ── LOCATE BUTTON ── */
-    #locate-btn {
-      position: absolute;
-      bottom: 100px;
-      right: 12px;
-      z-index: 400;
-      width: 40px;
-      height: 40px;
+    /* ── FLOATING CONTROLS ── */
+    .map-control {
+      position: fixed;
+      right: 14px;
+      z-index: 200;
+      width: 40px; height: 40px;
       border-radius: 50%;
-      background: #fff;
+      background: var(--surface);
       border: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-size: 1.1rem;
       -webkit-tap-highlight-color: transparent;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
     }
-    #locate-btn:hover { background: #f0f4ff; }
+    .map-control:hover { transform: scale(1.08); }
+    #locate-btn { bottom: 108px; }
     #locate-btn.active { background: #e8f1fd; }
 
-    /* ── VEHICLE COUNT PILL ── */
+    /* ── VEHICLE COUNT BADGE ── */
     #vehicle-count {
-      position: absolute;
-      bottom: 152px;
-      right: 12px;
-      z-index: 400;
-      background: rgba(26,37,53,0.88);
+      position: fixed;
+      bottom: 160px;
+      right: 14px;
+      z-index: 200;
+      background: rgba(15,23,42,0.82);
+      backdrop-filter: blur(6px);
       color: #fff;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 600;
       padding: 4px 10px;
       border-radius: 12px;
       pointer-events: none;
       display: none;
+      letter-spacing: 0.02em;
     }
 
-    /* ── LOADING OVERLAY ── */
+    /* ── LOADING SCREEN ── */
     #loading {
       position: fixed;
       inset: 0;
       background: var(--bg);
+      z-index: 9999;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
-      gap: 1rem;
+      gap: 16px;
       color: #fff;
     }
     #loading.hidden { display: none; }
 
     .spinner {
       width: 36px; height: 36px;
-      border: 3px solid rgba(255,255,255,0.2);
-      border-top-color: #fff;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: var(--route-color);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    #loading-text { font-size: 0.9rem; opacity: 0.7; }
+    #loading-text { font-size: 0.88rem; opacity: 0.55; letter-spacing: 0.02em; }
 
     /* ── ERROR BANNER ── */
     #error-banner {
       display: none;
-      position: absolute;
+      position: fixed;
       top: 0; left: 0; right: 0;
-      z-index: 600;
-      background: #C8222F;
+      z-index: 9998;
+      background: #B91C1C;
       color: #fff;
-      padding: 10px 16px;
+      padding: 56px 16px 14px;
       font-size: 0.85rem;
-      font-weight: 500;
+      line-height: 1.5;
     }
 
     /* ── STOP MARKERS ── */
     .stop-dot {
-      width: 10px; height: 10px;
+      width: 9px; height: 9px;
       border-radius: 50%;
       background: #fff;
       border: 2.5px solid var(--route-color, #0072CE);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
     }
 
-    /* ── VEHICLE MARKERS (Transit-app style) ── */
-    .vehicle-marker {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: var(--vc, #E16710);
-      border: 2.5px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    /* ── VEHICLE MARKERS — Transit-app style pill ── */
+    .vehicle-pill {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 900;
-      font-size: 0.72rem;
+      height: 28px;
+      min-width: 44px;
+      padding: 0 10px;
+      border-radius: 14px;
+      background: var(--vc, #E16710);
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      font-weight: 800;
+      font-size: 0.78rem;
       color: #fff;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
       position: relative;
-      transform-origin: center center;
+      transform-origin: center bottom;
     }
-    /* Direction arrow */
-    .vehicle-marker::after {
+    /* Direction nub */
+    .vehicle-pill::after {
       content: '';
       position: absolute;
-      top: -7px;
+      bottom: -7px;
       left: 50%;
       transform: translateX(-50%);
       border-left: 4px solid transparent;
       border-right: 4px solid transparent;
-      border-bottom: 7px solid var(--vc, #E16710);
+      border-top: 6px solid var(--vc, #E16710);
     }
 
     /* ── USER LOCATION ── */
+    .user-ring {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(0,114,206,0.12);
+      border: 1.5px solid rgba(0,114,206,0.25);
+    }
     .user-dot {
-      width: 16px; height: 16px;
+      width: 14px; height: 14px;
       border-radius: 50%;
       background: #0072CE;
       border: 3px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,114,206,0.5);
-    }
-    .user-dot-pulse {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: rgba(0,114,206,0.15);
-      border: 1px solid rgba(0,114,206,0.3);
+      box-shadow: 0 1px 6px rgba(0,114,206,0.5);
     }
 
-    /* ── POPUP STYLES ── */
-    .pop { min-width: 180px; }
-    .pop-title { font-size: 0.9rem; font-weight: 700; color: #111; margin-bottom: 8px; display: block; }
-    .pop-row { font-size: 0.8rem; color: #555; padding: 2px 0; }
-    .pop-row span { font-weight: 600; color: #222; }
-    .pop-next-stop {
-      margin-top: 8px;
-      padding: 8px 10px;
-      background: #f0f4f8;
-      border-radius: 8px;
-      border-left: 3px solid var(--route-color, #0072CE);
+    /* ── POPUP ── */
+    .pop { min-width: 190px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .pop-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
     }
-    .pop-next-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 3px; }
-    .pop-next-name  { font-size: 0.85rem; font-weight: 700; color: #111; }
-    .pop-eta        { font-size: 0.78rem; font-weight: 600; color: var(--route-color, #0072CE); margin-top: 2px; }
-    .pop-status { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 7px; border-radius: 10px; margin-top: 6px; background: #e8f5e9; color: #2e7d32; }
-    .pop-status.stopped { background: #fff3e0; color: #e65100; }
+    .pop-route-badge {
+      background: var(--pc, #0072CE);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.78rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .pop-title { font-size: 0.9rem; font-weight: 700; color: #0F172A; }
+    .pop-divider { height: 1px; background: #F1F5F9; margin: 8px 0; }
+    .pop-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #64748B;
+      padding: 2px 0;
+    }
+    .pop-row-icon { font-size: 0.85rem; flex-shrink: 0; }
+    .pop-row-value { font-weight: 600; color: #0F172A; }
+    .pop-next {
+      margin-top: 10px;
+      padding: 9px 11px;
+      background: #F8FAFC;
+      border-radius: 10px;
+      border-left: 3px solid var(--pc, #0072CE);
+    }
+    .pop-next-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94A3B8;
+      margin-bottom: 3px;
+    }
+    .pop-next-name { font-size: 0.88rem; font-weight: 700; color: #0F172A; }
+    .pop-eta { font-size: 0.78rem; font-weight: 600; color: var(--pc, #0072CE); margin-top: 2px; }
 
-    .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 3px 16px rgba(0,0,0,0.2); }
-    .leaflet-popup-content { margin: 12px 14px; }
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      padding: 0;
+    }
+    .leaflet-popup-content { margin: 14px 16px; }
+    .leaflet-popup-tip-container { margin-top: -1px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      #route-name { display: none; }
+      #direction-label { max-width: 100px; }
+    }
   </style>
 </head>
 <body>
 
+  <div id="map"></div>
+
   <header id="header">
     <div id="header-top">
-      <a href="/" id="back-btn" aria-label="Back to line picker">←</a>
-      <div id="route-badge">
+      <a href="/" id="back-btn" aria-label="Back">←</a>
+      <div id="route-pill">
         <span id="route-number">…</span>
         <span id="route-name">Loading…</span>
       </div>
@@ -317,31 +355,27 @@
 
   <div id="error-banner"></div>
 
-  <div id="map"></div>
-  <button id="locate-btn" title="Show my location" aria-label="Show my location">📍</button>
+  <button class="map-control" id="locate-btn" title="Show my location" aria-label="Show my location">📍</button>
   <div id="vehicle-count"></div>
 
   <div id="loading" aria-live="polite">
     <div class="spinner"></div>
-    <div id="loading-text">Loading route data…</div>
+    <div id="loading-text">Loading route…</div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script type="module">
   import { AGENCIES } from '/js/config.js';
 
-  // ── PARSE ROUTE FROM URL ──
-  // URL pattern: /line/{agency}-{routeCode}  e.g. /line/metro-207  /line/metro-G
+  // ── URL PARSING ──
   const slug    = location.pathname.split('/line/')[1] || '';
   const dashIdx = slug.indexOf('-');
-  const agencyId   = dashIdx > -1 ? slug.slice(0, dashIdx).toLowerCase() : 'metro';
-  const routeCode  = dashIdx > -1 ? slug.slice(dashIdx + 1).toUpperCase() : slug.toUpperCase();
+  const agencyId  = dashIdx > -1 ? slug.slice(0, dashIdx).toLowerCase() : 'metro';
+  const routeCode = dashIdx > -1 ? slug.slice(dashIdx + 1).toUpperCase() : slug.toUpperCase();
 
-  // G and J are BRT busways — WebSocket uses numeric codes
-  const WS_ALIAS = { 'G': '901', 'J': '910' };
-  const wsRouteCode = WS_ALIAS[routeCode] || routeCode;
-
-  const agencyConfig = AGENCIES[agencyId] || AGENCIES.metro;
+  const WS_ALIAS  = { 'G': '901', 'J': '910' };
+  const wsRoute   = WS_ALIAS[routeCode] || routeCode;
+  const agencyCfg = AGENCIES[agencyId] || AGENCIES.metro;
 
   // ── STATE ──
   const state = {
@@ -351,14 +385,12 @@
     dayType:         getDayType(),
     vehicles:        new Map(),
     lastUpdatedTime: null,
-    locating:        false,
-    userLatLng:      null,
   };
 
   // ── MAP ──
   const map = L.map('map', { zoomControl: true });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 20,
@@ -372,9 +404,7 @@
   // ── HELPERS ──
   function getDayType() {
     const d = new Date().getDay();
-    if (d === 0) return 'sunday';
-    if (d === 6) return 'saturday';
-    return 'weekday';
+    return d === 0 ? 'sunday' : d === 6 ? 'saturday' : 'weekday';
   }
 
   function parseDepartureTimes(str) {
@@ -389,8 +419,7 @@
   function minutesToDisplay(totalMins) {
     const h = Math.floor(totalMins / 60) % 24;
     const m = totalMins % 60;
-    const period = h >= 12 ? 'PM' : 'AM';
-    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
+    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
   }
 
   function getNextArrivals(times, count = 3) {
@@ -407,13 +436,11 @@
 
   function formatStatus(raw) {
     if (!raw) return 'En route';
-    return raw.replace(/_/g, ' ').toLowerCase()
-      .replace(/\b\w/g, c => c.toUpperCase());
+    return raw.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  // ── STOP LOOKUP MAP (built once stops load) ──
-  const stopMap = new Map(); // stop_id string → { name, lat, lng }
-
+  // ── STOP MAP ──
+  const stopMap = new Map();
   function buildStopMap() {
     state.stopsAll.forEach(s => {
       stopMap.set(String(s.stop_id), {
@@ -424,80 +451,60 @@
     });
   }
 
-  // ── HAVERSINE DISTANCE (meters) ──
+  // ── ETA ──
   function distanceMeters(lat1, lng1, lat2, lng2) {
-    const R = 6371000;
-    const toRad = x => x * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a = Math.sin(dLat / 2) ** 2
-            + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const R = 6371000, rad = x => x * Math.PI / 180;
+    const dLat = rad(lat2 - lat1), dLng = rad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
-  // ── ETA TEXT ──
-  function getETAText(pos, stop, currentStatus) {
-    if (currentStatus === 'STOPPED_AT') return 'At this stop';
-    const speed = pos?.speed || 0; // m/s
+  function getETAText(pos, stop, status) {
+    if (status === 'STOPPED_AT') return 'At this stop';
+    const speed = pos?.speed || 0;
     if (speed < 0.5) return 'Stopped nearby';
-    const dist = distanceMeters(pos.latitude, pos.longitude, stop.lat, stop.lng);
-    const mins  = Math.round(dist / speed / 60);
-    if (mins < 1) return 'Arriving now';
-    return `~${mins} min away`;
+    const mins = Math.round(distanceMeters(pos.latitude, pos.longitude, stop.lat, stop.lng) / speed / 60);
+    return mins < 1 ? 'Arriving now' : `~${mins} min away`;
   }
 
-  // ── APPLY ROUTE COLOR ──
-  function applyRouteColor(color) {
-    const hex = color ? `#${color}` : agencyConfig.color;
-    document.documentElement.style.setProperty('--route-color', hex);
-    document.getElementById('header').style.background = hex;
-    document.getElementById('route-number').style.color = hex;
+  // ── ROUTE COLOR ──
+  let _routeHex = agencyCfg.color;
+
+  function applyRouteColor(colorHex) {
+    _routeHex = colorHex;
+    document.documentElement.style.setProperty('--route-color', colorHex);
+    document.getElementById('header').style.background = colorHex;
   }
 
-  // ── SAVE TO RECENTLY VIEWED ──
   function saveRecent() {
     if (!state.routeInfo) return;
-    const color = state.routeInfo.route_color
-      ? `#${state.routeInfo.route_color}` : agencyConfig.color;
-    const label = `${agencyConfig.shortName} ${routeCode}`;
-    const item  = { slug, label, color };
-    const recent = JSON.parse(localStorage.getItem('recent_lines') || '[]')
-      .filter(r => r.slug !== slug);
+    const color = state.routeInfo.route_color ? `#${state.routeInfo.route_color}` : agencyCfg.color;
+    const item  = { slug, label: `${agencyCfg.shortName} ${routeCode}`, color };
+    const recent = JSON.parse(localStorage.getItem('recent_lines') || '[]').filter(r => r.slug !== slug);
     recent.unshift(item);
     localStorage.setItem('recent_lines', JSON.stringify(recent.slice(0, 12)));
   }
 
   // ── ICONS ──
   const stopIcon = L.divIcon({
-    html:        '<div class="stop-dot"></div>',
-    className:   '',
-    iconSize:    [10, 10],
-    iconAnchor:  [5, 5],
-    popupAnchor: [0, -10],
+    html: '<div class="stop-dot"></div>',
+    className: '', iconSize: [9,9], iconAnchor: [4.5,4.5], popupAnchor: [0,-10],
   });
 
-  function makeVehicleIcon(routeNum, color, bearing) {
-    const bg = color || agencyConfig.color;
+  function makeVehicleIcon(bearing) {
     return L.divIcon({
-      html: `<div class="vehicle-marker" style="--vc:${bg}; transform:rotate(${bearing || 0}deg)">${routeNum}</div>`,
-      className:   '',
-      iconSize:    [32, 32],
-      iconAnchor:  [16, 16],
-      popupAnchor: [0, -20],
+      html: `<div class="vehicle-pill" style="--vc:${_routeHex}; transform:rotate(${bearing||0}deg)">${routeCode}</div>`,
+      className: '', iconSize: [44,28], iconAnchor: [22,34], popupAnchor: [0,-36],
     });
   }
 
-  // ── RENDER ROUTE LINE ──
+  // ── RENDER ROUTE ──
   function renderRoute() {
     routeLayer.clearLayers();
     const stops = getDirectionStops();
     if (!stops.length) return;
     const latlngs = stops.map(s => [s.geometry.coordinates[1], s.geometry.coordinates[0]]);
-    L.polyline(latlngs, {
-      color:   document.documentElement.style.getPropertyValue('--route-color') || agencyConfig.color,
-      weight:  5,
-      opacity: 0.85,
-    }).addTo(routeLayer);
+    L.polyline(latlngs, { color: _routeHex, weight: 5, opacity: 0.9 }).addTo(routeLayer);
   }
 
   // ── RENDER STOPS ──
@@ -510,58 +517,58 @@
         .bindPopup(() => {
           const next = getNextArrivals(times);
           const timesHtml = next.length
-            ? next.map(t => `<div class="pop-row">🕐 <span>${t}</span></div>`).join('')
-            : '<div class="pop-row" style="color:#999;font-style:italic">No more arrivals today</div>';
+            ? next.map(t => `<div class="pop-row"><span class="pop-row-icon">🕐</span><span class="pop-row-value">${t}</span></div>`).join('')
+            : '<div class="pop-row" style="color:#94A3B8;font-style:italic">No more arrivals today</div>';
           return `
-            <div class="pop">
-              <span class="pop-title">${stop.stop_name}</span>
-              <div class="pop-row" style="font-size:0.72rem;color:#999;margin-bottom:4px">Scheduled arrivals</div>
+            <div class="pop" style="--pc:${_routeHex}">
+              <div class="pop-header">
+                <span class="pop-route-badge" style="background:${_routeHex}">${routeCode}</span>
+                <span class="pop-title">${stop.stop_name}</span>
+              </div>
+              <div style="font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#94A3B8;margin-bottom:6px">Scheduled arrivals</div>
               ${timesHtml}
             </div>`;
-        }, { maxWidth: 220 })
+        }, { maxWidth: 230 })
         .addTo(stopsLayer);
     });
   }
 
-  // ── RENDER / UPDATE VEHICLE ──
-  const routeColor = () =>
-    document.documentElement.style.getPropertyValue('--route-color') || agencyConfig.color;
-
+  // ── VEHICLE UPDATE ──
   function updateVehicle(vehicleId, data) {
-    const dirId = data.vehicle?.trip?.directionId;
-    const pos   = data.vehicle?.position;
-
+    const dirId  = data.vehicle?.trip?.directionId;
+    const pos    = data.vehicle?.position;
     if (dirId !== state.direction || !pos?.latitude || !pos?.longitude) {
-      if (vehicleMarkers.has(vehicleId)) {
-        vehicleMarkers.get(vehicleId).remove();
-        vehicleMarkers.delete(vehicleId);
-      }
+      if (vehicleMarkers.has(vehicleId)) { vehicleMarkers.get(vehicleId).remove(); vehicleMarkers.delete(vehicleId); }
       return;
     }
-
     const { latitude: lat, longitude: lng, bearing } = pos;
-    const label      = data.vehicle?.vehicle?.label || vehicleId;
-    const status     = data.vehicle?.currentStatus || '';
-    const stopId     = data.vehicle?.stopId || '';
-    const icon       = makeVehicleIcon(routeCode, routeColor(), bearing);
-
-    const isMoving   = status === 'IN_TRANSIT_TO';
-    const statusText = formatStatus(status);
-    const nextStop   = stopMap.get(String(stopId));
-    const stopLabel  = isMoving ? 'Next stop' : 'At stop';
-    const eta        = nextStop ? getETAText(pos, nextStop, status) : '';
+    const label    = data.vehicle?.vehicle?.label || vehicleId;
+    const status   = data.vehicle?.currentStatus || '';
+    const stopId   = data.vehicle?.stopId || '';
+    const isMoving = status === 'IN_TRANSIT_TO';
+    const nextStop = stopMap.get(String(stopId));
+    const eta      = nextStop ? getETAText(pos, nextStop, status) : '';
+    const icon     = makeVehicleIcon(bearing);
 
     const popHtml = `
-      <div class="pop">
-        <span class="pop-title">Bus ${label}</span>
-        <div class="pop-row">Route <span>${routeCode}</span> &nbsp;·&nbsp; ${Math.round((pos.speed || 0) * 3.6)} km/h</div>
+      <div class="pop" style="--pc:${_routeHex}">
+        <div class="pop-header">
+          <span class="pop-route-badge" style="background:${_routeHex}">${routeCode}</span>
+          <span class="pop-title">Bus ${label}</span>
+        </div>
+        <div class="pop-divider"></div>
+        <div class="pop-row">
+          <span class="pop-row-icon">⚡</span>
+          <span>${Math.round((pos.speed||0)*3.6)} km/h</span>
+          &nbsp;·&nbsp;
+          <span>${formatStatus(status)}</span>
+        </div>
         ${nextStop ? `
-        <div class="pop-next-stop">
-          <div class="pop-next-label">${stopLabel}</div>
+        <div class="pop-next">
+          <div class="pop-next-label">${isMoving ? 'Next stop' : 'At stop'}</div>
           <div class="pop-next-name">${nextStop.name}</div>
           ${eta ? `<div class="pop-eta">${eta}</div>` : ''}
-        </div>` : stopId ? `<div class="pop-row">Stop <span>#${stopId}</span></div>` : ''}
-        <span class="pop-status ${isMoving ? '' : 'stopped'}">${statusText}</span>
+        </div>` : ''}
       </div>`;
 
     if (vehicleMarkers.has(vehicleId)) {
@@ -570,7 +577,7 @@
       m.setIcon(icon);
     } else {
       const m = L.marker([lat, lng], { icon, zIndexOffset: 1000 })
-        .bindPopup(popHtml, { maxWidth: 220 })
+        .bindPopup(popHtml, { maxWidth: 240 })
         .addTo(vehicleLayer);
       vehicleMarkers.set(vehicleId, m);
     }
@@ -588,51 +595,33 @@
     const n  = vehicleMarkers.size;
     if (n === 0) { el.style.display = 'none'; return; }
     el.style.display = 'block';
-    el.textContent = `${n} bus${n === 1 ? '' : 'es'} active`;
+    el.textContent   = `${n} active`;
   }
 
   // ── STATUS BAR ──
   function updateStatus() {
-    const el  = document.getElementById('last-updated');
-    const now = Date.now();
-    if (!state.lastUpdatedTime) {
-      el.textContent = 'Waiting for live positions…';
-      el.className   = '';
-      return;
-    }
-    const ago = now - state.lastUpdatedTime.getTime();
+    const el = document.getElementById('last-updated');
+    if (!state.lastUpdatedTime) { el.textContent = 'Waiting for live positions…'; el.className = ''; return; }
+    const ago = Date.now() - state.lastUpdatedTime.getTime();
     const t   = state.lastUpdatedTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
-    if (ago > 2 * 60 * 1000) {
-      el.textContent = `⚠️ Data may be stale — last received ${t}`;
-      el.className   = 'stale';
-    } else {
-      el.textContent = `Last updated ${t}`;
-      el.className   = '';
-    }
+    el.textContent = ago > 120000 ? `⚠ Data may be stale — last at ${t}` : `Updated ${t}`;
+    el.className   = ago > 120000 ? 'stale' : '';
   }
 
   function updateDirectionUI() {
     if (!state.routeInfo) return;
-    const info = state.routeInfo;
-    const dir  = state.direction;
-    const label = dir === 0
-      ? `${info.travel_direction_0} to ${info.terminal_2}`
-      : `${info.travel_direction_1} to ${info.terminal_1}`;
-    const toggleTxt = dir === 0 ? info.travel_direction_1 : info.travel_direction_0;
-    document.getElementById('direction-label').textContent  = label;
-    document.getElementById('direction-toggle').textContent = `⇅ ${toggleTxt}`;
+    const { travel_direction_0: d0, travel_direction_1: d1, terminal_1: t1, terminal_2: t2 } = state.routeInfo;
+    const dir = state.direction;
+    document.getElementById('direction-label').textContent  = `${dir === 0 ? d0 : d1} to ${dir === 0 ? t2 : t1}`;
+    document.getElementById('direction-toggle').textContent = `⇅ ${dir === 0 ? d1 : d0}`;
   }
 
-  // ── WEBSOCKET (connects directly — no CORS restriction on WS) ──
-  let ws           = null;
-  let wsRetryTimer = null;
+  // ── WEBSOCKET ──
+  let ws = null, wsRetryTimer = null;
 
   function connectWS() {
     if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
-    const url = `${agencyConfig.wsBase}/${wsRouteCode}`;
-
-    ws = new WebSocket(url);
-
+    ws = new WebSocket(`${agencyCfg.wsBase}/${wsRoute}`);
     ws.onmessage = ({ data }) => {
       try {
         const msg = JSON.parse(data);
@@ -645,12 +634,7 @@
         }
       } catch {}
     };
-
-    ws.onclose = () => {
-      ws = null;
-      wsRetryTimer = setTimeout(connectWS, 5000);
-    };
-
+    ws.onclose = () => { ws = null; wsRetryTimer = setTimeout(connectWS, 5000); };
     ws.onerror = () => {};
   }
 
@@ -659,7 +643,6 @@
     if (ws) { ws.onclose = null; ws.close(); ws = null; }
   }
 
-  // Reconnect when tab comes back into focus
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       disconnectWS();
@@ -679,51 +662,38 @@
     renderRoute();
     renderStops();
     refreshAllVehicles();
-    if (routeLayer.getBounds().isValid()) {
-      map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
-    }
+    if (routeLayer.getBounds().isValid()) map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
   });
 
   // ── USER LOCATION ──
-  let userMarker      = null;
-  let userPulseMarker = null;
+  let userMarker = null, pulseMarker = null;
 
   document.getElementById('locate-btn').addEventListener('click', () => {
     if (!navigator.geolocation) return;
     const btn = document.getElementById('locate-btn');
     btn.classList.add('active');
-    navigator.geolocation.getCurrentPosition(pos => {
-      const { latitude: lat, longitude: lng } = pos.coords;
-      state.userLatLng = [lat, lng];
-      if (userMarker)      { userMarker.setLatLng([lat, lng]); }
+    navigator.geolocation.getCurrentPosition(({ coords: { latitude: lat, longitude: lng } }) => {
+      if (pulseMarker) { pulseMarker.setLatLng([lat, lng]); userMarker.setLatLng([lat, lng]); }
       else {
-        userPulseMarker = L.marker([lat, lng], {
-          icon: L.divIcon({ html: '<div class="user-dot-pulse"></div>', className: '', iconSize: [40,40], iconAnchor: [20,20] }),
+        pulseMarker = L.marker([lat, lng], {
+          icon: L.divIcon({ html: '<div class="user-ring"></div>', className: '', iconSize: [44,44], iconAnchor: [22,22] }),
           zIndexOffset: 500,
         }).addTo(map);
         userMarker = L.marker([lat, lng], {
-          icon: L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [16,16], iconAnchor: [8,8] }),
+          icon: L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [14,14], iconAnchor: [7,7] }),
           zIndexOffset: 501,
         }).addTo(map);
       }
-      map.setView([lat, lng], 14);
+      map.setView([lat, lng], 15);
       btn.classList.remove('active');
     }, () => btn.classList.remove('active'));
   });
 
-  // ── SHOW ERROR ──
-  function showError(msg) {
-    const el = document.getElementById('error-banner');
-    el.textContent = msg;
-    el.style.display = 'block';
-  }
-
   // ── INIT ──
   async function init() {
     document.getElementById('loading-text').textContent = `Loading route ${routeCode}…`;
-
     try {
-      const res = await fetch(`/api/route?route=${routeCode}&agency=${agencyId}`);
+      const res  = await fetch(`/api/route?route=${routeCode}&agency=${agencyId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.unavailable) throw Object.assign(new Error(json.error), { unavailable: true });
@@ -734,22 +704,21 @@
       state.stopsAll  = stops;
       buildStopMap();
 
-      // Update page metadata
       const routeName = route.route_long_name || route.route_desc || 'Metro Line';
+      const color     = route.route_color ? `#${route.route_color}` : agencyCfg.color;
+
       document.title = `Route ${routeCode} · ${routeName} · SoCal 511 Transit`;
       document.getElementById('route-number').textContent = routeCode;
       document.getElementById('route-name').textContent   = routeName;
       document.getElementById('direction-toggle').disabled = false;
 
-      applyRouteColor(route.route_color);
+      applyRouteColor(color);
       updateDirectionUI();
       renderRoute();
       renderStops();
       saveRecent();
 
-      if (routeLayer.getBounds().isValid()) {
-        map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
-      }
+      if (routeLayer.getBounds().isValid()) map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
 
       document.getElementById('loading').classList.add('hidden');
       updateStatus();
@@ -758,11 +727,9 @@
 
     } catch (err) {
       document.getElementById('loading').classList.add('hidden');
-      if (err.unavailable) {
-        showError(`Metro ${routeCode} Line — ${err.message}`);
-      } else {
-        showError(`Could not load route ${routeCode}: ${err.message}`);
-      }
+      const banner = document.getElementById('error-banner');
+      banner.textContent = err.unavailable ? `${err.message}` : `Could not load route ${routeCode}: ${err.message}`;
+      banner.style.display = 'block';
     }
   }
 
