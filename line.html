@@ -763,11 +763,21 @@
       try {
         const msg = JSON.parse(data);
         if (msg.id && msg.vehicle) {
+          const prev    = state.vehicles.get(msg.id);
+          const newPos  = msg.vehicle?.position;
+          const prevPos = prev?.vehicle?.position;
+          const moved   = !prevPos
+            || newPos?.latitude  !== prevPos.latitude
+            || newPos?.longitude !== prevPos.longitude;
+
           state.vehicles.set(msg.id, msg);
-          state.lastUpdatedTime = new Date();
           updateVehicle(msg.id, msg);
           updateVehicleCount();
-          updateStatus();
+
+          if (moved) {
+            state.lastUpdatedTime = new Date();
+            updateStatus();
+          }
         }
       } catch {}
     };
