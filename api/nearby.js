@@ -6,13 +6,10 @@
 //
 // Falls back to live Metro API calls if the index is empty (before first sync).
 
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { createRequire } from 'module';
 
-const stopIndex   = JSON.parse(
-  readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'stop-index.json'), 'utf8')
-);
+const require   = createRequire(import.meta.url);
+const stopIndex = require('./stop-index.json');
 const INDEX_READY = Object.keys(stopIndex).length > 0;
 
 const RADIUS_KM   = 0.8;
