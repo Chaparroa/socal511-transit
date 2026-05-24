@@ -538,10 +538,12 @@
 
   function getETAText(pos, stop, status) {
     if (status === 'STOPPED_AT') return 'At this stop';
-    const speed = pos?.speed || 0;
-    if (speed < 0.5) return 'Stopped nearby';
-    const mins = Math.round(distanceMeters(pos.latitude, pos.longitude, stop.lat, stop.lng) / speed / 60);
-    return mins < 1 ? 'Arriving now' : `~${mins} min away`;
+    const dist  = distanceMeters(pos.latitude, pos.longitude, stop.lat, stop.lng);
+    // Use reported speed (m/s) if available; fall back to ~25 km/h when feed omits it
+    const speed = (pos?.speed > 0.5) ? pos.speed : 6.94;
+    const mins  = dist / speed / 60;
+    if (mins < 0.5) return 'Arriving';
+    return `~${Math.round(mins)} min away`;
   }
 
   // ── ROUTE COLOR ──
@@ -644,7 +646,7 @@
         <div class="pop-divider"></div>
         <div class="pop-row">
           <span class="pop-row-icon">⚡</span>
-          <span>${Math.round((pos.speed||0)*3.6)} km/h</span>
+          <span>${Math.round((pos.speed||0)*2.237)} mph</span>
           &nbsp;·&nbsp;
           <span>${formatStatus(status)}</span>
         </div>
@@ -690,20 +692,17 @@
   }
 
   // ── STATUS BAR ──
-  function formatAgo(ms) {
-    const s = Math.floor(ms / 1000);
-    if (s < 30) return 'just now';
-    if (s < 90) return '1 min ago';
-    const m = Math.floor(s / 60);
-    return m < 60 ? `${m} min ago` : `${Math.floor(m / 60)}h ago`;
+  function formatTimestamp(date) {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
   }
 
   function updateStatus() {
     const el = document.getElementById('last-updated');
     if (!state.lastUpdatedTime) { el.textContent = 'Waiting for live positions…'; el.className = ''; return; }
     const ago   = Date.now() - state.lastUpdatedTime.getTime();
-    const stale = ago > 120000;
-    el.textContent = stale ? `⚠ Last updated ${formatAgo(ago)}` : `Updated ${formatAgo(ago)}`;
+    const stale = ago > 60000;
+    const ts    = formatTimestamp(state.lastUpdatedTime);
+    el.textContent = stale ? `⚠ Updated ${ts} · feed may be delayed` : `Updated ${ts}`;
     el.className   = stale ? 'stale' : '';
   }
 
