@@ -23,7 +23,7 @@ const TIMEOUT = 6000;
 const ROOT            = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ROUTES_JS       = resolve(ROOT, 'api', 'routes.js');
 const NEARBY_JS       = resolve(ROOT, 'api', 'nearby.js');
-const STOP_INDEX_JSON = resolve(ROOT, 'api', 'stop-index.json');
+const STOP_INDEX_JS   = resolve(ROOT, 'api', 'stop-index.js');
 
 // Probe all numeric codes in this range.
 // Upper bound is generous — Metro tops out around 800 today.
@@ -182,8 +182,8 @@ async function main() {
   // ── Write api/stop-index.json ────────────────────────────────────────────────
   const stopIndex  = await buildStopIndex(found);
   const stopCount  = Object.values(stopIndex).reduce((s, a) => s + a.length, 0);
-  writeFileSync(STOP_INDEX_JSON, JSON.stringify(stopIndex), 'utf8');
-  console.log(`✓ Updated ${STOP_INDEX_JSON} (${Object.keys(stopIndex).length} routes, ${stopCount} unique stops)`);
+  writeFileSync(STOP_INDEX_JS, `export default ${JSON.stringify(stopIndex)};\n`, 'utf8');
+  console.log(`✓ Updated ${STOP_INDEX_JS} (${Object.keys(stopIndex).length} routes, ${stopCount} unique stops)`);
 }
 
 main().catch(err => { console.error(err); process.exit(1); });

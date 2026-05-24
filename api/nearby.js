@@ -6,10 +6,7 @@
 //
 // Falls back to live Metro API calls if the index is empty (before first sync).
 
-import { createRequire } from 'module';
-
-const require   = createRequire(import.meta.url);
-const stopIndex = require('./stop-index.json');
+import stopIndex from './stop-index.js';
 const INDEX_READY = Object.keys(stopIndex).length > 0;
 
 const RADIUS_KM   = 0.8;
